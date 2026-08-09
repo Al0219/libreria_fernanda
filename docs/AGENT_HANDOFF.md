@@ -86,6 +86,12 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Persistencia:** La misma transacción SQLite guarda `sale_price` en el detalle de compra, aumenta el stock y actualiza el precio de costo y de venta del producto.
 - **Compatibilidad:** La migración añade `sale_price` con valor predeterminado `0` a las bases de datos existentes; el detalle de compras muestra ese valor histórico.
 - **Verificado:** Prueba sql.js de persistencia de stock y precios; `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: precios históricos en ventas
+
+- **Precio de venta:** Ya se preservaba correctamente en `sale_items.unit_price`, incluida cualquier modificación de precio hecha en el carrito antes de cobrar.
+- **Costo histórico:** Cada nueva venta guarda `sale_items.unit_cost` con el `purchase_price` vigente del producto, obtenido en el proceso principal dentro de la transacción de venta.
+- **Compatibilidad:** La migración agrega `unit_cost` como valor nulo a líneas de venta anteriores, pues su costo real ya no se puede reconstruir con fiabilidad. Servicios nuevos conservan costo `0`.
+- **Verificado:** Migración, inmutabilidad de costo y precio tras cambiar el producto, `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

@@ -170,6 +170,7 @@ function createTables() {
       description TEXT NOT NULL,
       quantity REAL NOT NULL DEFAULT 1,
       unit_price REAL NOT NULL,
+      unit_cost REAL,
       subtotal REAL NOT NULL,
       metadata_json TEXT
     );
@@ -217,6 +218,14 @@ function runMigrations() {
   try {
     db.run(`ALTER TABLE stock_entry_items ADD COLUMN sale_price REAL NOT NULL DEFAULT 0`)
     console.log('[DB] Migración: columna sale_price agregada a stock_entry_items')
+  } catch {
+    // La columna ya existe — ignorar
+  }
+
+  // Agregar costo histórico a los detalles de ventas existentes
+  try {
+    db.run(`ALTER TABLE sale_items ADD COLUMN unit_cost REAL`)
+    console.log('[DB] Migración: columna unit_cost agregada a sale_items')
   } catch {
     // La columna ya existe — ignorar
   }

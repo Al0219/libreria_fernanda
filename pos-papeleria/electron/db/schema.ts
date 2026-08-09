@@ -101,7 +101,8 @@ export const saleItems = sqliteTable('sale_items', {
   productId: integer('product_id').references(() => products.id),
   description: text('description').notNull(),
   quantity: real('quantity').notNull().default(1),
-  unitPrice: real('unit_price').notNull(),
+  unitPrice: real('unit_price').notNull(), // precio de venta histórico
+  unitCost: real('unit_cost'), // costo histórico; nulo en ventas anteriores a la migración
   subtotal: real('subtotal').notNull(),
   metadataJson: text('metadata_json'), // datos extra según item_type
 })

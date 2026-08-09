@@ -37,17 +37,25 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
          customer?.id || null, customerName, customerNit, createdAt]
       )
 
-      // Insertar ítems y descontar stock
+      // Insertar ítems, congelar el costo vigente y descontar stock
       for (const item of data.items) {
+        let unitCost = 0
+        if (item.itemType === 'product') {
+          if (!item.productId) throw new Error('El producto de la venta no es válido.')
+          const product = queryFirst(db, 'SELECT purchase_price FROM products WHERE id=?', [item.productId])
+          if (!product) throw new Error('El producto seleccionado ya no existe.')
+          unitCost = Number(product.purchase_price) || 0
+        }
+
         run(db,
-          `INSERT INTO sale_items (sale_id, item_type, product_id, description, quantity, unit_price, subtotal, metadata_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO sale_items (sale_id, item_type, product_id, description, quantity, unit_price, unit_cost, subtotal, metadata_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [saleId, item.itemType, item.productId || null, item.description,
-           item.quantity, item.unitPrice, item.subtotal,
+           item.quantity, item.unitPrice, unitCost, item.subtotal,
            item.metadataJson ? JSON.stringify(item.metadataJson) : null]
         )
 
-        if (item.itemType === 'product' && item.productId) {
+        if (item.itemType === 'product') {
           run(db, `UPDATE products SET stock = stock - ? WHERE id=?`, [item.quantity, item.productId])
         }
       }
