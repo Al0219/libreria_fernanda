@@ -65,6 +65,10 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 
 - **Interfaz:** El botón principal de Registrar compra usa el tamaño estándar de los demás módulos (`btn btn-primary`), ícono de 16 px y texto sin prefijo redundante.
 - **Verificado:** `tsc --noEmit` correcto.
+## Actualización 2026-08-09: etiqueta de creación rápida en compras
+
+- **Interfaz:** Se eliminó el signo `+` redundante del texto “Crear producto rápido”; el ícono conserva la acción visual.
+- **Verificado:** `tsc --noEmit` correcto.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

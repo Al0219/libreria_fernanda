@@ -186,7 +186,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
                   style={{ background: 'var(--accent-primary)', color: 'white' }}
                   onClick={() => setShowProductModal(true)}
                 >
-                  <Plus size={14} /> + Crear producto rápido
+                  <Plus size={14} /> Crear producto rápido
                 </button>
               </div>
 
