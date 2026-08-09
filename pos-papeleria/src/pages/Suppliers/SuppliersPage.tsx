@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../../lib/api'
+import ConfirmModal from '../../components/ConfirmModal'
 import { Plus, Truck, Edit2, Trash2, Phone, Mail, Search } from 'lucide-react'
 
 interface Supplier {
@@ -18,6 +19,8 @@ export default function SuppliersPage() {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null)
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const loadSuppliers = useCallback(async () => {
     const data = await api.suppliers.getAll()
@@ -32,12 +35,19 @@ export default function SuppliersPage() {
       .some(value => value?.toLocaleLowerCase('es-GT').includes(normalizedSearch))
   )
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`¿Eliminar el proveedor "${name}"?`)) return
-    await api.suppliers.delete(id)
-    loadSuppliers()
+  const confirmDelete = async () => {
+    if (!supplierToDelete) return
+    setDeleting(true)
+    try {
+      await api.suppliers.delete(supplierToDelete.id)
+      setSupplierToDelete(null)
+      await loadSuppliers()
+    } catch {
+      alert('No se pudo eliminar el proveedor. Puede tener compras o productos relacionados.')
+    } finally {
+      setDeleting(false)
+    }
   }
-
   return (
     <div>
       <div className="page-header">
@@ -89,7 +99,7 @@ export default function SuppliersPage() {
                   <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setEditSupplier(supplier); setShowModal(true) }}>
                     <Edit2 size={13} />
                   </button>
-                  <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--accent-danger)' }} onClick={() => handleDelete(supplier.id, supplier.name)}>
+                  <button className="btn btn-ghost btn-icon btn-sm" style={{ color: 'var(--accent-danger)' }} onClick={() => setSupplierToDelete(supplier)}>
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -116,6 +126,17 @@ export default function SuppliersPage() {
         <SupplierFormModal
           supplier={editSupplier}
           onClose={() => { setShowModal(false); setEditSupplier(null); loadSuppliers() }}
+        />
+      )}
+      {supplierToDelete && (
+        <ConfirmModal
+          title="¿Eliminar este proveedor?"
+          message={`Eliminarás a ${supplierToDelete.name}. Esta acción no se puede deshacer.`}
+          confirmLabel={deleting ? 'Eliminando...' : 'Sí, eliminar proveedor'}
+          cancelLabel="No, mantenerlo"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => { if (!deleting) setSupplierToDelete(null) }}
         />
       )}
     </div>

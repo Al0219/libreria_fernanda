@@ -75,6 +75,11 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Inventario:** La cancelación resta las cantidades ingresadas por esa compra dentro de una transacción SQLite. Se rechaza íntegramente si alguna existencia no alcanza, evitando stock negativo o reversiones parciales.
 - **Consistencia adicional:** La creación de compras ahora también inserta entrada, ítems y aumento de stock en una única transacción.
 - **Verificado:** Casos de reversión, doble cancelación y stock insuficiente comprobados con sql.js; `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: confirmación al eliminar proveedores
+
+- **Interfaz:** El borrado de proveedores dejó de usar el diálogo nativo y ahora muestra el modal de confirmación visual del sistema.
+- **Protección:** Incluye acción de peligro, nombre del proveedor y mensaje de error si existen compras o productos relacionados.
+- **Verificado:** `tsc --noEmit` correcto.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
