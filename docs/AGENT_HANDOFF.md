@@ -21,11 +21,18 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - `vite build`: correcto.
 - `electron-builder`: generó `release/win-unpacked`, pero el instalador NSIS falló al extraer `winCodeSign` porque Windows no concede el privilegio para crear enlaces simbólicos. No es un error de compilación del POS.
 
+## Actualización 2026-08-09: transacciones de ventas
+
+- **Completado:** la creación de una venta ahora ejecuta en una sola transacción la generación del folio, venta, ítems y descuento de stock. La cancelación agrupa reposición de stock y marcado de cancelación.
+- **Protección:** si una operación SQL falla, se hace `ROLLBACK`; la base no conserva una venta parcial ni un inventario a medias. La persistencia a disco ocurre sólo después de `COMMIT`.
+- **Interfaz:** el historial ya no elimina una venta de la pantalla cuando el proceso principal responde que no se pudo cancelar.
+- **Archivos modificados:** `electron/db/helpers.ts`, `electron/ipc/sales.ipc.ts` y `src/pages/Sales/SalesHistoryPage.tsx`.
+- **Verificado:** `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
 2. Corregir el uso de fechas UTC en ventas (`toISOString()`), ya que desde las 18:00 en Guatemala puede asignar una venta al día siguiente.
-3. Proteger altas y cancelaciones de ventas con transacciones SQLite y validar stock también en el proceso principal.
+3. Validar stock y cantidades tambien en el proceso principal antes de crear una venta.
 4. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
 
 ## Protocolo de trabajo

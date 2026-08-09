@@ -30,6 +30,26 @@ export function run(db: Database, sql: string, params: any[] = []): number {
   return result[0]?.values[0][0] as number || 0
 }
 
+/**
+ * Ejecuta varias operaciones como una unidad atomica. Si alguna falla, SQLite
+ * revierte todos los cambios hechos por la funcion de trabajo.
+ */
+export function transaction<T>(db: Database, work: () => T): T {
+  db.run('BEGIN IMMEDIATE TRANSACTION')
+
+  try {
+    const result = work()
+    db.run('COMMIT')
+    return result
+  } catch (error) {
+    try {
+      db.run('ROLLBACK')
+    } catch (rollbackError) {
+      console.error('[DB transaction rollback error]', rollbackError)
+    }
+    throw error
+  }
+}
 export function count(db: Database, sql: string, params: any[] = []): number {
   const result = db.exec(sql, params)
   return (result[0]?.values[0][0] as number) || 0

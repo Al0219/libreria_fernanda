@@ -98,7 +98,8 @@ function SaleRow({
     setShowConfirm(false)
     setCancelling(true)
     try {
-      await (api.sales as any).cancel(sale.id)
+      const result = await api.sales.cancel(sale.id) as { success: boolean; error?: string }
+      if (!result.success) throw new Error(result.error)
       onCancelled(sale.id)
     } catch {
       alert('No se pudo cancelar la venta. Intenta de nuevo.')
