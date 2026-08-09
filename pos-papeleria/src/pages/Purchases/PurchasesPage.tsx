@@ -8,10 +8,10 @@ export default function PurchasesPage() {
   const [purchases, setPurchases] = useState<any[]>([])
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [selectedSupplier, setSelectedSupplier] = useState<string>('')
-  
+
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedPurchaseForDetail, setSelectedPurchaseForDetail] = useState<any | null>(null)
-  
+
   const [loading, setLoading] = useState(true)
 
   const loadPurchases = useCallback(async () => {
@@ -19,7 +19,7 @@ export default function PurchasesPage() {
     try {
       const filters: any = {}
       if (selectedSupplier) filters.supplierId = parseInt(selectedSupplier)
-      
+
       const data = await api.stockEntries.getAll(filters)
       setPurchases(data as any[])
     } catch (err) {
@@ -58,7 +58,7 @@ export default function PurchasesPage() {
           onClick={() => setShowFormModal(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
         >
-          <Plus size={18} /> + Registrar Entrada / Compra
+          <Plus size={16} /> Registrar Entrada / Compra
         </button>
       </div>
 
@@ -78,7 +78,7 @@ export default function PurchasesPage() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          
+
           {selectedSupplier && (
             <button
               className="btn btn-ghost btn-sm"

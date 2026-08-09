@@ -63,7 +63,7 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Verificado:** Regla de duplicados comprobada con sql.js; `tsc --noEmit` y `vite build` correctos.
 ## Actualización 2026-08-09: tamaño del botón de compras
 
-- **Interfaz:** El botón principal de Registrar compra ahora usa el tamaño estándar de los demás módulos (`btn btn-primary`).
+- **Interfaz:** El botón principal de Registrar compra usa el tamaño estándar de los demás módulos (`btn btn-primary`), ícono de 16 px y texto sin prefijo redundante.
 - **Verificado:** `tsc --noEmit` correcto.
 ## Pendiente inmediato
 
