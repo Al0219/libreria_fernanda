@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../../lib/api'
-import { Plus, Truck, Edit2, Trash2, Phone, Mail } from 'lucide-react'
+import { Plus, Truck, Edit2, Trash2, Phone, Mail, Search } from 'lucide-react'
 
 interface Supplier {
   id: number
@@ -15,6 +15,7 @@ interface Supplier {
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editSupplier, setEditSupplier] = useState<Supplier | null>(null)
 
@@ -24,6 +25,12 @@ export default function SuppliersPage() {
   }, [])
 
   useEffect(() => { loadSuppliers() }, [loadSuppliers])
+
+  const normalizedSearch = search.trim().toLocaleLowerCase('es-GT')
+  const filteredSuppliers = suppliers.filter(supplier =>
+    [supplier.name, supplier.company, supplier.nit, supplier.phone, supplier.email]
+      .some(value => value?.toLocaleLowerCase('es-GT').includes(normalizedSearch))
+  )
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`¿Eliminar el proveedor "${name}"?`)) return
@@ -36,11 +43,26 @@ export default function SuppliersPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Proveedores</h1>
-          <p className="page-subtitle">{suppliers.length} proveedores registrados</p>
+          <p className="page-subtitle">
+            {normalizedSearch ? `${filteredSuppliers.length} de ${suppliers.length}` : suppliers.length} proveedores registrados
+          </p>
         </div>
         <button className="btn btn-primary" onClick={() => { setEditSupplier(null); setShowModal(true) }}>
           <Plus size={16} /> Nuevo proveedor
         </button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16, padding: 14 }}>
+        <div style={{ position: 'relative' }}>
+          <Search size={15} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            className="input"
+            style={{ paddingLeft: 32 }}
+            placeholder="Buscar por nombre, empresa, NIT, teléfono o correo..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       {suppliers.length === 0 ? (
@@ -48,9 +70,14 @@ export default function SuppliersPage() {
           <Truck size={48} style={{ display: 'block', margin: '0 auto 12px', opacity: 0.2 }} />
           <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No hay proveedores registrados</p>
         </div>
+      ) : filteredSuppliers.length === 0 ? (
+        <div className="card" style={{ textAlign: 'center', padding: 60 }}>
+          <Search size={48} style={{ display: 'block', margin: '0 auto 12px', opacity: 0.2 }} />
+          <p style={{ color: 'var(--text-muted)', fontSize: 14 }}>No se encontraron proveedores</p>
+        </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
-          {suppliers.map(supplier => (
+          {filteredSuppliers.map(supplier => (
             <div key={supplier.id} className="card">
               <div className="flex justify-between items-center" style={{ marginBottom: 12 }}>
                 <div>

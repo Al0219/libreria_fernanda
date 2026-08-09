@@ -49,6 +49,11 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Gestión:** La creación y edición de proveedores guardan el NIT junto con los demás datos.
 - **Interfaz:** El formulario muestra un campo opcional de NIT y las tarjetas de proveedores muestran el valor cuando existe.
 - **Verificado:** Migración y persistencia comprobadas con sql.js; `tsc --noEmit` y `vite build` completaron correctamente.
+## Actualización 2026-08-09: buscador de proveedores
+
+- **Búsqueda local:** La lista de proveedores se filtra instantáneamente por nombre, empresa, NIT, teléfono y correo.
+- **Interfaz:** Muestra el conteo de resultados y un estado vacío cuando no hay coincidencias.
+- **Verificado:** `tsc --noEmit` y `vite build` completaron correctamente.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
