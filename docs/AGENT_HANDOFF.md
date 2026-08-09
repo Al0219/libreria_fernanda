@@ -61,6 +61,10 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **POS:** El carrito usa `Consumidor final / C/F` por defecto, permite buscar un cliente por nombre, NIT o teléfono y crear uno rápido sin perder la venta en curso; el nuevo cliente queda seleccionado automáticamente.
 - **Ventas y tickets:** La transacción de venta valida que el cliente esté activo y guarda una instantánea del nombre y NIT. Tickets nuevos y reimpresiones usan esa instantánea, incluso si el cliente se edita o archiva después.
 - **Verificado:** Regla de duplicados comprobada con sql.js; `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: tamaño del botón de compras
+
+- **Interfaz:** El botón principal de Registrar compra ahora usa el tamaño estándar de los demás módulos (`btn btn-primary`).
+- **Verificado:** `tsc --noEmit` correcto.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

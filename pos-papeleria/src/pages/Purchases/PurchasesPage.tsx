@@ -54,7 +54,7 @@ export default function PurchasesPage() {
         </div>
 
         <button
-          className="btn btn-primary btn-lg"
+          className="btn btn-primary"
           onClick={() => setShowFormModal(true)}
           style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600 }}
         >
