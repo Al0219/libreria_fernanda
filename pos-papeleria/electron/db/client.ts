@@ -144,6 +144,7 @@ function createTables() {
       product_id INTEGER NOT NULL REFERENCES products(id),
       quantity INTEGER NOT NULL,
       purchase_price REAL NOT NULL,
+      sale_price REAL NOT NULL DEFAULT 0,
       subtotal REAL NOT NULL
     );
 
@@ -212,6 +213,14 @@ function runMigrations() {
   } catch {
     // La columna ya existe — ignorar
   }
+  // Agregar precio de venta a los detalles de compras existentes
+  try {
+    db.run(`ALTER TABLE stock_entry_items ADD COLUMN sale_price REAL NOT NULL DEFAULT 0`)
+    console.log('[DB] Migración: columna sale_price agregada a stock_entry_items')
+  } catch {
+    // La columna ya existe — ignorar
+  }
+
   // Agregar datos de cliente a ventas existentes
   for (const [column, definition] of [
     ['customer_id', 'INTEGER'],

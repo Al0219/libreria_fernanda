@@ -72,6 +72,7 @@ export const stockEntryItems = sqliteTable('stock_entry_items', {
   productId: integer('product_id').references(() => products.id).notNull(),
   quantity: integer('quantity').notNull(),
   purchasePrice: real('purchase_price').notNull(),
+  salePrice: real('sale_price').notNull().default(0),
   subtotal: real('subtotal').notNull(),
 })
 

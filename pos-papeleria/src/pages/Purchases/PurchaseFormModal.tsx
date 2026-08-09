@@ -16,6 +16,7 @@ interface PurchaseItem {
   currentStock: number
   quantity: number
   purchasePrice: number
+  salePrice: number
   subtotal: number
 }
 
@@ -60,6 +61,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
       updateItem(existing.id, 'quantity', existing.quantity + 1)
     } else {
       const initialPrice = p.purchase_price ?? p.purchasePrice ?? 0
+      const initialSalePrice = p.sale_price ?? p.salePrice ?? 0
       const newItem: PurchaseItem = {
         id: `pi-${Date.now()}-${Math.random()}`,
         productId: p.id,
@@ -67,6 +69,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
         currentStock: p.stock ?? 0,
         quantity: 1,
         purchasePrice: initialPrice,
+        salePrice: initialSalePrice,
         subtotal: 1 * initialPrice
       }
       setItems(prev => [...prev, newItem])
@@ -75,7 +78,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
     setSearchResults([])
   }
 
-  const updateItem = (id: string, field: 'quantity' | 'purchasePrice', val: number) => {
+  const updateItem = (id: string, field: 'quantity' | 'purchasePrice' | 'salePrice', val: number) => {
     setItems(prev => prev.map(item => {
       if (item.id === id) {
         const next = { ...item, [field]: val >= 0 ? val : 0 }
@@ -114,6 +117,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
           productId: i.productId,
           quantity: i.quantity,
           purchasePrice: i.purchasePrice,
+          salePrice: i.salePrice,
           subtotal: i.subtotal,
         })),
       }
@@ -244,17 +248,18 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.5fr 2fr 1.5fr 40px', gap: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.25fr 1.55fr 1.55fr 1.45fr 40px', gap: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
                     <span>Producto</span>
                     <span style={{ textAlign: 'center' }}>Cantidad que llega</span>
                     <span style={{ textAlign: 'right' }}>Precio de Costo (Q)</span>
+                    <span style={{ textAlign: 'right' }}>Precio de Venta (Q)</span>
                     <span style={{ textAlign: 'right' }}>Subtotal (Q)</span>
                     <span></span>
                   </div>
 
                   {items.map(item => (
                     <div key={item.id} style={{
-                      display: 'grid', gridTemplateColumns: '3fr 1.5fr 2fr 1.5fr 40px', gap: 8, alignItems: 'center',
+                      display: 'grid', gridTemplateColumns: '3fr 1.25fr 1.55fr 1.55fr 1.45fr 40px', gap: 8, alignItems: 'center',
                       padding: '10px 12px', background: 'var(--bg-base)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)'
                     }}>
                       <div>
@@ -283,6 +288,19 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
                           style={{ textAlign: 'right', width: 90 }}
                           value={item.purchasePrice === 0 ? '' : item.purchasePrice}
                           onChange={e => updateItem(item.id, 'purchasePrice', parseFloat(e.target.value) || 0)}
+                        />
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end' }}>
+                        <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>Q</span>
+                        <input
+                          className="input"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          style={{ textAlign: 'right', width: 90 }}
+                          value={item.salePrice === 0 ? '' : item.salePrice}
+                          onChange={e => updateItem(item.id, 'salePrice', parseFloat(e.target.value) || 0)}
                         />
                       </div>
 

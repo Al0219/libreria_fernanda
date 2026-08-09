@@ -80,6 +80,12 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Interfaz:** El borrado de proveedores dejó de usar el diálogo nativo y ahora muestra el modal de confirmación visual del sistema.
 - **Protección:** Incluye acción de peligro, nombre del proveedor y mensaje de error si existen compras o productos relacionados.
 - **Verificado:** `tsc --noEmit` correcto.
+## Actualización 2026-08-09: precio de venta en compras
+
+- **Formulario:** Cada artículo de una nueva compra permite ingresar precio de costo, precio de venta y cantidad. El precio de venta inicia con el valor actual del producto.
+- **Persistencia:** La misma transacción SQLite guarda `sale_price` en el detalle de compra, aumenta el stock y actualiza el precio de costo y de venta del producto.
+- **Compatibilidad:** La migración añade `sale_price` con valor predeterminado `0` a las bases de datos existentes; el detalle de compras muestra ese valor histórico.
+- **Verificado:** Prueba sql.js de persistencia de stock y precios; `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

@@ -13,12 +13,12 @@ export function registerStockEntryHandlers(ipcMain: IpcMain) {
 
       for (const item of data.items) {
         run(db,
-          `INSERT INTO stock_entry_items (entry_id, product_id, quantity, purchase_price, subtotal) VALUES (?,?,?,?,?)`,
-          [entryId, item.productId, item.quantity, item.purchasePrice, item.subtotal]
+          `INSERT INTO stock_entry_items (entry_id, product_id, quantity, purchase_price, sale_price, subtotal) VALUES (?,?,?,?,?,?)`,
+          [entryId, item.productId, item.quantity, item.purchasePrice, item.salePrice, item.subtotal]
         )
         run(db,
-          `UPDATE products SET stock=stock+?, purchase_price=?, updated_at=datetime('now') WHERE id=?`,
-          [item.quantity, item.purchasePrice, item.productId]
+          `UPDATE products SET stock=stock+?, purchase_price=?, sale_price=?, updated_at=datetime('now') WHERE id=?`,
+          [item.quantity, item.purchasePrice, item.salePrice, item.productId]
         )
       }
 

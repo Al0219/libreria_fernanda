@@ -75,21 +75,23 @@ export default function PurchaseDetailModal({ purchase, onClose }: PurchaseDetai
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.5fr 1.5fr 1.5fr', gap: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1.2fr 1.4fr 1.4fr 1.4fr', gap: 8, padding: '6px 12px', fontSize: 12, color: 'var(--text-muted)', fontWeight: 600 }}>
                   <span>Producto</span>
                   <span style={{ textAlign: 'center' }}>Cantidad recibida</span>
                   <span style={{ textAlign: 'right' }}>Precio Costo (Q)</span>
+                  <span style={{ textAlign: 'right' }}>Precio Venta (Q)</span>
                   <span style={{ textAlign: 'right' }}>Subtotal (Q)</span>
                 </div>
 
                 {items.map(item => (
                   <div key={item.id} style={{
-                    display: 'grid', gridTemplateColumns: '3fr 1.5fr 1.5fr 1.5fr', gap: 8, alignItems: 'center',
+                    display: 'grid', gridTemplateColumns: '3fr 1.2fr 1.4fr 1.4fr 1.4fr', gap: 8, alignItems: 'center',
                     padding: '10px 12px', background: 'var(--bg-base)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)'
                   }}>
                     <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--text-primary)' }}>{item.product_name || 'Producto #' + item.product_id}</span>
                     <span style={{ textAlign: 'center', fontWeight: 700, color: 'var(--accent-success)' }}>+{item.quantity} unds.</span>
                     <span style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>Q{item.purchase_price?.toFixed(2)}</span>
+                    <span style={{ textAlign: 'right', color: 'var(--text-secondary)' }}>Q{Number(item.sale_price || 0).toFixed(2)}</span>
                     <span style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-primary)' }}>Q{item.subtotal?.toFixed(2)}</span>
                   </div>
                 ))}
