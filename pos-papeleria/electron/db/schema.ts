@@ -62,6 +62,7 @@ export const stockEntries = sqliteTable('stock_entries', {
   date: text('date').notNull(),
   totalAmount: real('total_amount').notNull().default(0),
   notes: text('notes'),
+  cancelled: integer('cancelled', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 })
 

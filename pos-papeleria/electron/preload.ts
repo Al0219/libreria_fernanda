@@ -49,6 +49,7 @@ const api = {
     getAll: (filters?: any) => ipcRenderer.invoke('stockEntries:getAll', filters),
     getById: (id: number) => ipcRenderer.invoke('stockEntries:getById', id),
     getPriceHistory: (productId: number) => ipcRenderer.invoke('stockEntries:getPriceHistory', productId),
+    cancel: (id: number) => ipcRenderer.invoke('stockEntries:cancel', id),
   },
   // Reportes
   reports: {

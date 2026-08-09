@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, ShoppingBag, Eye, Calendar, Truck, FileText } from 'lucide-react'
+import { Plus, ShoppingBag, Eye, Calendar, Truck, FileText, Trash2 } from 'lucide-react'
 import { api } from '../../lib/api'
 import PurchaseFormModal from './PurchaseFormModal'
 import PurchaseDetailModal from './PurchaseDetailModal'
+import ConfirmModal from '../../components/ConfirmModal'
 
 export default function PurchasesPage() {
   const [purchases, setPurchases] = useState<any[]>([])
@@ -11,6 +12,8 @@ export default function PurchasesPage() {
 
   const [showFormModal, setShowFormModal] = useState(false)
   const [selectedPurchaseForDetail, setSelectedPurchaseForDetail] = useState<any | null>(null)
+  const [purchaseToCancel, setPurchaseToCancel] = useState<any | null>(null)
+  const [cancelling, setCancelling] = useState(false)
 
   const [loading, setLoading] = useState(true)
 
@@ -37,6 +40,24 @@ export default function PurchasesPage() {
     loadPurchases()
   }, [loadPurchases])
 
+  const confirmCancellation = async () => {
+    if (!purchaseToCancel) return
+    setCancelling(true)
+    try {
+      const result = await api.stockEntries.cancel(purchaseToCancel.id) as { success: boolean; error?: string }
+      if (!result.success) {
+        alert(result.error || 'No se pudo cancelar la compra.')
+        return
+      }
+      if (selectedPurchaseForDetail?.id === purchaseToCancel.id) setSelectedPurchaseForDetail(null)
+      setPurchaseToCancel(null)
+      await loadPurchases()
+    } catch {
+      alert('No se pudo cancelar la compra. Intenta de nuevo.')
+    } finally {
+      setCancelling(false)
+    }
+  }
   const totalInvoiced = purchases.reduce((acc, curr) => acc + (Number(curr.total_amount) || 0), 0)
 
   return (
@@ -169,6 +190,15 @@ export default function PurchasesPage() {
                     >
                       <Eye size={15} /> Ver
                     </button>
+                    <button
+                      className="btn btn-ghost btn-icon btn-sm"
+                      onClick={() => setPurchaseToCancel(purchase)}
+                      disabled={cancelling}
+                      title="Cancelar compra y revertir stock"
+                      style={{ color: 'var(--accent-danger)', marginLeft: 4 }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </td>
                 </tr>
               ))
@@ -192,6 +222,17 @@ export default function PurchasesPage() {
         <PurchaseDetailModal
           purchase={selectedPurchaseForDetail}
           onClose={() => setSelectedPurchaseForDetail(null)}
+        />
+      )}
+      {purchaseToCancel && (
+        <ConfirmModal
+          title="¿Cancelar esta compra?"
+          message={`La compra #${purchaseToCancel.id} quedará cancelada y se restará del inventario la cantidad ingresada. Esta acción no se puede deshacer.`}
+          confirmLabel={cancelling ? 'Cancelando...' : 'Sí, cancelar compra'}
+          cancelLabel="No, mantenerla"
+          danger
+          onConfirm={confirmCancellation}
+          onCancel={() => { if (!cancelling) setPurchaseToCancel(null) }}
         />
       )}
     </div>

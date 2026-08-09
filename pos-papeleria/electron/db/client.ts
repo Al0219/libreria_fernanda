@@ -134,6 +134,7 @@ function createTables() {
       date TEXT NOT NULL,
       total_amount REAL NOT NULL DEFAULT 0,
       notes TEXT,
+      cancelled INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
     );
 
@@ -204,6 +205,13 @@ function runMigrations() {
     // La columna ya existe — ignorar
   }
 
+  // Agregar cancelación lógica a compras existentes
+  try {
+    db.run(`ALTER TABLE stock_entries ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0`)
+    console.log('[DB] Migración: columna cancelled agregada a stock_entries')
+  } catch {
+    // La columna ya existe — ignorar
+  }
   // Agregar datos de cliente a ventas existentes
   for (const [column, definition] of [
     ['customer_id', 'INTEGER'],
