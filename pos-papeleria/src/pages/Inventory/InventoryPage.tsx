@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, Search, AlertTriangle, Edit2, Trash2, Package } from 'lucide-react'
+import { Plus, Search, AlertTriangle, Edit2, Trash2, Package, History } from 'lucide-react'
 import ProductFormModal from './ProductFormModal'
+import PriceHistoryModal from './PriceHistoryModal'
 import { api } from '../../lib/api'
 
 interface Product {
@@ -26,6 +27,7 @@ export default function InventoryPage() {
   const [categories, setCategories] = useState<any[]>([])
   const [showModal, setShowModal] = useState(false)
   const [editProduct, setEditProduct] = useState<Product | null>(null)
+  const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
   const [lowStockCount, setLowStockCount] = useState(0)
 
   const loadProducts = useCallback(async () => {
@@ -120,7 +122,7 @@ export default function InventoryPage() {
               <th>Margen</th>
               <th>Stock</th>
               <th>Proveedor</th>
-              <th style={{ width: 80 }}></th>
+              <th style={{ width: 112 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -155,6 +157,9 @@ export default function InventoryPage() {
                 <td style={{ fontSize: 12.5, color: 'var(--text-secondary)' }}>{product.supplier_name || '—'}</td>
                 <td>
                   <div className="flex gap-2">
+                    <button className="btn btn-ghost btn-icon btn-sm" onClick={() => setHistoryProduct(product)} title="Historial de precios">
+                      <History size={13} />
+                    </button>
                     <button className="btn btn-ghost btn-icon btn-sm" onClick={() => handleEdit(product)} title="Editar">
                       <Edit2 size={13} />
                     </button>
@@ -168,6 +173,13 @@ export default function InventoryPage() {
           </tbody>
         </table>
       </div>
+
+      {historyProduct && (
+        <PriceHistoryModal
+          product={historyProduct}
+          onClose={() => setHistoryProduct(null)}
+        />
+      )}
 
       {showModal && (
         <ProductFormModal

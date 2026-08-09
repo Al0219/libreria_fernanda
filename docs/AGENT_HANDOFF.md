@@ -92,6 +92,12 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Costo histórico:** Cada nueva venta guarda `sale_items.unit_cost` con el `purchase_price` vigente del producto, obtenido en el proceso principal dentro de la transacción de venta.
 - **Compatibilidad:** La migración agrega `unit_cost` como valor nulo a líneas de venta anteriores, pues su costo real ya no se puede reconstruir con fiabilidad. Servicios nuevos conservan costo `0`.
 - **Verificado:** Migración, inmutabilidad de costo y precio tras cambiar el producto, `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: historial de precios y proveedor preferido
+
+- **Historial:** Inventario incorpora un botón por producto que muestra compras no canceladas con fecha, proveedor, cantidad, costo, precio de venta y variación frente a la compra previa. Resume último costo y menor costo histórico con su proveedor.
+- **Proveedor preferido:** Al registrar una compra se puede marcar el proveedor elegido como preferido para todos los productos de esa entrada. Si no se marca, el proveedor actual del producto se conserva; siempre se guarda la compra y su proveedor en el historial.
+- **Integridad:** El cambio opcional de proveedor se hace dentro de la transacción SQLite y valida que el proveedor exista.
+- **Verificado:** Caso con/sin actualización del proveedor y consulta que excluye compras canceladas comprobados con sql.js; `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

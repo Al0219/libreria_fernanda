@@ -6,6 +6,12 @@ export function registerStockEntryHandlers(ipcMain: IpcMain) {
   ipcMain.handle('stockEntries:create', (_e, data: any) => {
     const db = getDb()
     const result = transaction(db, () => {
+      const preferredSupplierId = data.setAsPreferredSupplier && data.supplierId ? Number(data.supplierId) : null
+      if (preferredSupplierId) {
+        const supplier = queryFirst(db, 'SELECT id FROM suppliers WHERE id=?', [preferredSupplierId])
+        if (!supplier) throw new Error('El proveedor seleccionado no existe.')
+      }
+
       const entryId = run(db,
         `INSERT INTO stock_entries (supplier_id, date, total_amount, notes) VALUES (?,?,?,?)`,
         [data.supplierId || null, data.date, data.totalAmount, data.notes || null]
@@ -17,8 +23,8 @@ export function registerStockEntryHandlers(ipcMain: IpcMain) {
           [entryId, item.productId, item.quantity, item.purchasePrice, item.salePrice, item.subtotal]
         )
         run(db,
-          `UPDATE products SET stock=stock+?, purchase_price=?, sale_price=?, updated_at=datetime('now') WHERE id=?`,
-          [item.quantity, item.purchasePrice, item.salePrice, item.productId]
+          `UPDATE products SET stock=stock+?, purchase_price=?, sale_price=?, supplier_id=COALESCE(?, supplier_id), updated_at=datetime('now') WHERE id=?`,
+          [item.quantity, item.purchasePrice, item.salePrice, preferredSupplierId, item.productId]
         )
       }
 
@@ -83,12 +89,14 @@ export function registerStockEntryHandlers(ipcMain: IpcMain) {
   ipcMain.handle('stockEntries:getPriceHistory', (_e, productId: number) => {
     const db = getDb()
     return queryAll(db, `
-      SELECT sei.purchase_price, se.date, s.name as supplier_name
+      SELECT sei.id, se.id as entry_id, se.date, se.supplier_id,
+             COALESCE(s.name, 'Compra general') as supplier_name,
+             sei.quantity, sei.purchase_price, sei.sale_price
       FROM stock_entry_items sei
       JOIN stock_entries se ON sei.entry_id=se.id
       LEFT JOIN suppliers s ON se.supplier_id=s.id
       WHERE sei.product_id=? AND (se.cancelled IS NULL OR se.cancelled=0)
-      ORDER BY se.date ASC
+      ORDER BY se.date ASC, se.id ASC, sei.id ASC
     `, [productId])
   })
 }

@@ -24,6 +24,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [supplierId, setSupplierId] = useState<string>('')
+  const [setAsPreferredSupplier, setSetAsPreferredSupplier] = useState(false)
   const [date, setDate] = useState<string>(getBusinessDate())
   const [notes, setNotes] = useState<string>('')
   
@@ -110,6 +111,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
     try {
       const payload = {
         supplierId: supplierId ? parseInt(supplierId) : null,
+        setAsPreferredSupplier: setAsPreferredSupplier && Boolean(supplierId),
         date: date || getBusinessDate(),
         totalAmount,
         notes: notes.trim() || null,
@@ -156,12 +158,29 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: 12, background: 'var(--bg-elevated)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
               <div className="form-group">
                 <label className="form-label">Proveedor (opcional)</label>
-                <select className="select" value={supplierId} onChange={e => setSupplierId(e.target.value)}>
+                <select
+                  className="select"
+                  value={supplierId}
+                  onChange={e => {
+                    setSupplierId(e.target.value)
+                    if (!e.target.value) setSetAsPreferredSupplier(false)
+                  }}
+                >
                   <option value="">-- Compra general / Sin proveedor --</option>
                   {suppliers.map(s => (
                     <option key={s.id} value={s.id}>{s.name}</option>
                   ))}
                 </select>
+                {supplierId && (
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 8, fontSize: 12, color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={setAsPreferredSupplier}
+                      onChange={e => setSetAsPreferredSupplier(e.target.checked)}
+                    />
+                    Marcar como proveedor preferido de estos productos
+                  </label>
+                )}
               </div>
 
               <div className="form-group">
