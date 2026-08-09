@@ -14,6 +14,7 @@ export const suppliers = sqliteTable('suppliers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
   company: text('company'),
+  nit: text('nit'),
   phone: text('phone'),
   email: text('email'),
   address: text('address'),

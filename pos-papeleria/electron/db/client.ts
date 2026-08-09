@@ -86,6 +86,7 @@ function createTables() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       company TEXT,
+      nit TEXT,
       phone TEXT,
       email TEXT,
       address TEXT,
@@ -174,6 +175,14 @@ function runMigrations() {
   try {
     db.run(`ALTER TABLE sales ADD COLUMN cancelled INTEGER NOT NULL DEFAULT 0`)
     console.log('[DB] Migración: columna cancelled agregada a sales')
+  } catch {
+    // La columna ya existe — ignorar
+  }
+
+  // Agregar NIT a proveedores existentes
+  try {
+    db.run(`ALTER TABLE suppliers ADD COLUMN nit TEXT`)
+    console.log('[DB] Migración: columna nit agregada a suppliers')
   } catch {
     // La columna ya existe — ignorar
   }

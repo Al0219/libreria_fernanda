@@ -43,6 +43,12 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Flujo:** las existencias aumentan mediante Compras; el producto rápido de ese módulo también inicia en `0` antes de registrar la entrada.
 - **Interfaz:** el campo de stock queda informativo y bloqueado al crear o editar un producto.
 - **Verificado:** `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: NIT de proveedores
+
+- **Base de datos:** La tabla `suppliers` ahora incluye `nit TEXT`. Al abrir una base de datos existente se agrega la columna automáticamente mediante migración, sin eliminar proveedores previos.
+- **Gestión:** La creación y edición de proveedores guardan el NIT junto con los demás datos.
+- **Interfaz:** El formulario muestra un campo opcional de NIT y las tarjetas de proveedores muestran el valor cuando existe.
+- **Verificado:** Migración y persistencia comprobadas con sql.js; `tsc --noEmit` y `vite build` completaron correctamente.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

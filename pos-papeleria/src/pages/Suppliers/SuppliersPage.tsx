@@ -6,6 +6,7 @@ interface Supplier {
   id: number
   name: string
   company: string
+  nit: string
   phone: string
   email: string
   address: string
@@ -55,6 +56,7 @@ export default function SuppliersPage() {
                 <div>
                   <h3 style={{ fontWeight: 600, fontSize: 15 }}>{supplier.name}</h3>
                   {supplier.company && <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>{supplier.company}</p>}
+                  {supplier.nit && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>NIT: {supplier.nit}</p>}
                 </div>
                 <div className="flex gap-2">
                   <button className="btn btn-ghost btn-icon btn-sm" onClick={() => { setEditSupplier(supplier); setShowModal(true) }}>
@@ -97,6 +99,7 @@ function SupplierFormModal({ supplier, onClose }: { supplier: Supplier | null; o
   const [form, setForm] = useState({
     name: supplier?.name || '',
     company: supplier?.company || '',
+    nit: supplier?.nit || '',
     phone: supplier?.phone || '',
     email: supplier?.email || '',
     address: supplier?.address || '',
@@ -126,7 +129,10 @@ function SupplierFormModal({ supplier, onClose }: { supplier: Supplier | null; o
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="form-group"><label className="form-label">Nombre *</label><input className="input" value={form.name} onChange={e => set('name', e.target.value)} autoFocus /></div>
-          <div className="form-group"><label className="form-label">Empresa</label><input className="input" value={form.company} onChange={e => set('company', e.target.value)} /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div className="form-group"><label className="form-label">Empresa</label><input className="input" value={form.company} onChange={e => set('company', e.target.value)} /></div>
+            <div className="form-group"><label className="form-label">NIT</label><input className="input" value={form.nit} onChange={e => set('nit', e.target.value)} placeholder="1234567-8" /></div>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
             <div className="form-group"><label className="form-label">Teléfono</label><input className="input" value={form.phone} onChange={e => set('phone', e.target.value)} /></div>
             <div className="form-group"><label className="form-label">Correo</label><input className="input" type="email" value={form.email} onChange={e => set('email', e.target.value)} /></div>

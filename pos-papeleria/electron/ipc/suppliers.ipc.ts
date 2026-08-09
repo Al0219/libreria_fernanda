@@ -14,8 +14,8 @@ export function registerSupplierHandlers(ipcMain: IpcMain) {
   ipcMain.handle('suppliers:create', (_e, data: any) => {
     const db = getDb()
     const id = run(db,
-      `INSERT INTO suppliers (name, company, phone, email, address, notes) VALUES (?,?,?,?,?,?)`,
-      [data.name, data.company || null, data.phone || null, data.email || null, data.address || null, data.notes || null]
+      `INSERT INTO suppliers (name, company, nit, phone, email, address, notes) VALUES (?,?,?,?,?,?,?)`,
+      [data.name, data.company || null, data.nit || null, data.phone || null, data.email || null, data.address || null, data.notes || null]
     )
     saveDb()
     return { id, ...data }
@@ -24,8 +24,8 @@ export function registerSupplierHandlers(ipcMain: IpcMain) {
   ipcMain.handle('suppliers:update', (_e, id: number, data: any) => {
     const db = getDb()
     run(db,
-      `UPDATE suppliers SET name=?,company=?,phone=?,email=?,address=?,notes=? WHERE id=?`,
-      [data.name, data.company || null, data.phone || null, data.email || null, data.address || null, data.notes || null, id]
+      `UPDATE suppliers SET name=?,company=?,nit=?,phone=?,email=?,address=?,notes=? WHERE id=?`,
+      [data.name, data.company || null, data.nit || null, data.phone || null, data.email || null, data.address || null, data.notes || null, id]
     )
     saveDb()
     return { success: true }
