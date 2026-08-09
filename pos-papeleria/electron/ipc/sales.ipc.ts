@@ -8,6 +8,14 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
     const db = getDb()
     const result = transaction(db, () => {
 
+      let customer: any = null
+      if (data.customerId) {
+        customer = queryFirst(db, 'SELECT id, name, nit FROM customers WHERE id=? AND active=1', [data.customerId])
+        if (!customer) throw new Error('El cliente seleccionado no existe o está archivado.')
+      }
+      const customerName = customer?.name || 'Consumidor final'
+      const customerNit = customer?.nit || 'C/F'
+
       // Generar folio YYYYMMDD-NNN
       const todayStr = businessDate()
       const createdAt = new Date().toISOString()
@@ -22,10 +30,11 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
 
       // Insertar venta
       const saleId = run(db,
-        `INSERT INTO sales (folio, date, subtotal, discount, total, payment_method, amount_paid, change_given, notes, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO sales (folio, date, subtotal, discount, total, payment_method, amount_paid, change_given, notes, customer_id, customer_name, customer_nit, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [folio, todayStr, data.subtotal, data.discount || 0, data.total,
-         data.paymentMethod, data.amountPaid, data.changeGiven || 0, data.notes || null, createdAt]
+         data.paymentMethod, data.amountPaid, data.changeGiven || 0, data.notes || null,
+         customer?.id || null, customerName, customerNit, createdAt]
       )
 
       // Insertar ítems y descontar stock
@@ -43,7 +52,7 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
         }
       }
 
-      return { id: saleId, folio, date: todayStr, createdAt }
+      return { id: saleId, folio, date: todayStr, createdAt, customerName, customerNit }
     })
     saveDb()
     return result
@@ -70,8 +79,8 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
 
     if (filters?.search) {
       const term = `%${filters.search}%`
-      sql += ` AND (s.folio LIKE ? OR s.notes LIKE ? OR si.description LIKE ?)`
-      params.push(term, term, term)
+      sql += ` AND (s.folio LIKE ? OR s.notes LIKE ? OR s.customer_name LIKE ? OR s.customer_nit LIKE ? OR si.description LIKE ?)`
+      params.push(term, term, term, term, term)
     }
 
     sql += ' ORDER BY datetime(s.created_at) DESC'

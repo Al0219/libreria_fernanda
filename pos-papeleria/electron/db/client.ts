@@ -94,6 +94,23 @@ function createTables() {
       created_at TEXT DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS customers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      name_normalized TEXT NOT NULL,
+      nit TEXT,
+      nit_normalized TEXT NOT NULL DEFAULT '',
+      phone TEXT,
+      phone_normalized TEXT NOT NULL DEFAULT '',
+      email TEXT,
+      address TEXT,
+      notes TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_identity
+      ON customers (name_normalized, nit_normalized, phone_normalized);
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -185,6 +202,20 @@ function runMigrations() {
     console.log('[DB] Migración: columna nit agregada a suppliers')
   } catch {
     // La columna ya existe — ignorar
+  }
+
+  // Agregar datos de cliente a ventas existentes
+  for (const [column, definition] of [
+    ['customer_id', 'INTEGER'],
+    ['customer_name', 'TEXT'],
+    ['customer_nit', 'TEXT'],
+  ]) {
+    try {
+      db.run(`ALTER TABLE sales ADD COLUMN ${column} ${definition}`)
+      console.log(`[DB] Migración: columna ${column} agregada a sales`)
+    } catch {
+      // La columna ya existe — ignorar
+    }
   }
 }
 

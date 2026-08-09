@@ -4,11 +4,13 @@ import { api } from '../../lib/api'
 import { formatBusinessTime, getBusinessDate } from '../../lib/business-time'
 import { CheckCircle, Banknote, FileText, Printer } from 'lucide-react'
 import { CartItem } from '../../stores/cart.store'
+import { type Customer } from '../../components/CustomerFormModal'
 import { TicketDocument, TicketData } from './TicketPDF'
 
 interface PaymentModalProps {
   total: number
   items: CartItem[]
+  customer: Customer | null
   onClose: () => void
   onComplete: () => void
 }
@@ -21,12 +23,12 @@ const METHOD_LABELS: Record<PaymentMethod, string> = {
   transfer: '📲 Transferencia',
 }
 
-export default function PaymentModal({ total, items, onClose, onComplete }: PaymentModalProps) {
+export default function PaymentModal({ total, items, customer, onClose, onComplete }: PaymentModalProps) {
   const [method, setMethod] = useState<PaymentMethod>('cash')
   const [amountPaid, setAmountPaid] = useState(total.toFixed(2))
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
-  const [saleResult, setSaleResult] = useState<{ folio: string; date: string; createdAt: string; changeGiven: number } | null>(null)
+  const [saleResult, setSaleResult] = useState<{ folio: string; date: string; createdAt: string; changeGiven: number; customerName: string | null; customerNit: string | null } | null>(null)
   const [printingPdf, setPrintingPdf] = useState(false)
 
   const change = Math.max(0, parseFloat(amountPaid) - total)
@@ -42,6 +44,7 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
         paymentMethod: method,
         amountPaid: parseFloat(amountPaid),
         changeGiven: method === 'cash' ? change : 0,
+        customerId: customer?.id || null,
         items: items.map(item => ({
           itemType: item.itemType,
           productId: item.productId,
@@ -51,9 +54,9 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
           subtotal: item.subtotal,
           metadataJson: item.metadataJson,
         })),
-      }) as { id: number; folio: string; date: string; createdAt: string }
+      }) as { id: number; folio: string; date: string; createdAt: string; customerName: string | null; customerNit: string | null }
 
-      setSaleResult({ folio: result.folio, date: result.date, createdAt: result.createdAt, changeGiven: method === 'cash' ? change : 0 })
+      setSaleResult({ folio: result.folio, date: result.date, createdAt: result.createdAt, changeGiven: method === 'cash' ? change : 0, customerName: result.customerName, customerNit: result.customerNit })
       setDone(true)
     } catch (err) {
       console.error(err)
@@ -88,6 +91,8 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
         businessAddress: config.business_address,
         businessPhone: config.business_phone,
         ticketFooter: config.ticket_footer,
+        customerName: saleResult.customerName || undefined,
+        customerNit: saleResult.customerNit || undefined,
       }
 
       // Generar PDF en el renderer
@@ -174,6 +179,12 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
             Q{total.toFixed(2)}
           </div>
         </div>
+
+        {customer && (
+          <div style={{ marginTop: -12, marginBottom: 16, fontSize: 12, color: 'var(--text-secondary)' }}>
+            Cliente: <strong>{customer.name}</strong>{customer.nit ? ` · NIT: ${customer.nit}` : ''}
+          </div>
+        )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Método de pago */}

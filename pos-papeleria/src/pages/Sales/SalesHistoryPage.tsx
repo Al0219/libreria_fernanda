@@ -20,6 +20,9 @@ interface Sale {
   amount_paid: number
   change_given: number
   notes: string | null
+  customer_id: number | null
+  customer_name: string | null
+  customer_nit: string | null
   cancelled: number
   created_at: string
 }
@@ -142,6 +145,8 @@ function SaleRow({
         businessAddress: config.business_address,
         businessPhone: config.business_phone,
         ticketFooter: config.ticket_footer,
+        customerName: sale.customer_name || undefined,
+        customerNit: sale.customer_nit || undefined,
       }
 
       const blob = await pdf(<TicketDocument data={ticketData} />).toBlob()
@@ -409,7 +414,7 @@ export default function SalesHistoryPage() {
           <input
             className="input"
             style={{ paddingLeft: 34 }}
-            placeholder="Buscar por folio o notas..."
+            placeholder="Buscar por folio, cliente o notas..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />

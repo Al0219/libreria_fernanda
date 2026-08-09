@@ -29,6 +29,8 @@ export interface TicketData {
   businessAddress?: string
   businessPhone?: string
   ticketFooter?: string
+  customerName?: string
+  customerNit?: string
 }
 
 const METHOD_LABEL: Record<string, string> = {
@@ -90,6 +92,9 @@ const S = StyleSheet.create({
   folioLabel: { fontSize: 8, color: '#7CA8C7', marginBottom: 2 },
   folioValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: '#3B82C4' },
   dateText: { fontSize: 8.5, color: '#3B6A91', textAlign: 'right' },
+  customerBox: { marginBottom: 12, padding: 8, backgroundColor: '#F2FFF9', borderRadius: 4 },
+  customerLabel: { fontSize: 7.5, color: '#7CA8C7', marginBottom: 2 },
+  customerValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#133250' },
 
   // Tabla de items
   tableHeader: {
@@ -198,6 +203,14 @@ export function TicketDocument({ data }: { data: TicketData }) {
           </View>
         </View>
 
+
+        {data.customerName && (
+          <View style={S.customerBox}>
+            <Text style={S.customerLabel}>CLIENTE</Text>
+            <Text style={S.customerValue}>{data.customerName}</Text>
+            {data.customerNit && <Text style={S.customerLabel}>NIT: {data.customerNit}</Text>}
+          </View>
+        )}
         {/* ── Tabla de ítems ── */}
         <View style={S.tableHeader}>
           <Text style={[S.thText, S.colDesc]}>Descripción</Text>

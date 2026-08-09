@@ -5,6 +5,7 @@ import { useCartStore } from '../../stores/cart.store'
 import PrintModal from './PrintModal'
 import ResearchModal from './ResearchModal'
 import PaymentModal from './PaymentModal'
+import CustomerFormModal, { type Customer } from '../../components/CustomerFormModal'
 
 interface Product {
   id: number
@@ -22,6 +23,11 @@ export default function POSPage() {
   const [showPrintModal, setShowPrintModal] = useState(false)
   const [showResearchModal, setShowResearchModal] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [customers, setCustomers] = useState<Customer[]>([])
+  const [customerSearch, setCustomerSearch] = useState('')
+  const [showCustomerSelector, setShowCustomerSelector] = useState(false)
+  const [showQuickCustomer, setShowQuickCustomer] = useState(false)
 
   const { items, addItem, removeItem, updateQuantity, updatePrice, clearCart, total } = useCartStore()
 
@@ -37,6 +43,14 @@ export default function POSPage() {
     return () => clearTimeout(timer)
   }, [search, searchProducts])
 
+  useEffect(() => {
+    if (!showCustomerSelector) return
+    const timer = setTimeout(async () => {
+      const data = await api.customers.getAll({ search: customerSearch })
+      setCustomers(data as Customer[])
+    }, 200)
+    return () => clearTimeout(timer)
+  }, [showCustomerSelector, customerSearch])
   // Cargar ventas del día
   const loadTodaySales = useCallback(async () => {
     const sales = await api.sales.getToday()
@@ -70,6 +84,8 @@ export default function POSPage() {
   const handleSaleComplete = async () => {
     await loadTodaySales()
     clearCart()
+    setSelectedCustomer(null)
+    setCustomerSearch('')
     setShowPaymentModal(false)
   }
 
@@ -199,6 +215,49 @@ export default function POSPage() {
             )}
           </div>
 
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)' }}>
+            <div className="flex justify-between items-center" style={{ marginBottom: selectedCustomer || showCustomerSelector ? 8 : 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Cliente</span>
+              <div className="flex gap-2">
+                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px', color: 'var(--accent-primary)' }} onClick={() => setShowQuickCustomer(true)}>
+                  <Plus size={13} /> Nuevo
+                </button>
+                <button className="btn btn-ghost btn-sm" style={{ padding: '4px 8px' }} onClick={() => setShowCustomerSelector(value => !value)}>
+                  <Search size={13} /> {selectedCustomer ? 'Cambiar' : 'Seleccionar'}
+                </button>
+              </div>
+            </div>
+
+            {selectedCustomer ? (
+              <div className="flex justify-between items-center" style={{ background: 'var(--bg-base)', borderRadius: 'var(--radius-sm)', padding: '7px 9px' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{selectedCustomer.name}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{selectedCustomer.nit ? `NIT: ${selectedCustomer.nit}` : 'Sin NIT'}</div>
+                </div>
+                <button className="btn btn-ghost btn-icon btn-sm" title="Usar consumidor final" onClick={() => setSelectedCustomer(null)}><X size={13} /></button>
+              </div>
+            ) : !showCustomerSelector && (
+              <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>Consumidor final · NIT: C/F</div>
+            )}
+
+            {showCustomerSelector && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ position: 'relative' }}>
+                  <Search size={14} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input className="input" style={{ paddingLeft: 30, fontSize: 13 }} placeholder="Buscar nombre, NIT o teléfono..." value={customerSearch} onChange={e => setCustomerSearch(e.target.value)} autoFocus />
+                </div>
+                <div style={{ maxHeight: 160, overflowY: 'auto', marginTop: 6, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {customers.map(customer => (
+                    <button key={customer.id} onClick={() => { setSelectedCustomer(customer); setShowCustomerSelector(false); setCustomerSearch('') }} style={{ textAlign: 'left', padding: '7px 9px', background: 'var(--bg-base)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--text-primary)' }}>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{customer.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{customer.nit || customer.phone || 'Sin NIT ni teléfono'}</div>
+                    </button>
+                  ))}
+                  {customers.length === 0 && <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: 6 }}>No hay coincidencias. Crea un cliente rápido.</div>}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="cart-items">
             {items.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
@@ -267,8 +326,21 @@ export default function POSPage() {
         <PaymentModal
           total={total()}
           items={items}
+          customer={selectedCustomer}
           onClose={() => setShowPaymentModal(false)}
           onComplete={handleSaleComplete}
+        />
+      )}
+      {showQuickCustomer && (
+        <CustomerFormModal
+          quick
+          onClose={() => setShowQuickCustomer(false)}
+          onSaved={(customer) => {
+            setSelectedCustomer(customer)
+            setShowQuickCustomer(false)
+            setShowCustomerSelector(false)
+            setCustomerSearch('')
+          }}
         />
       )}
     </div>

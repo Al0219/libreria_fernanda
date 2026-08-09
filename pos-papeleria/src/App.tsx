@@ -6,6 +6,7 @@ import InventoryPage from './pages/Inventory/InventoryPage'
 import PurchasesPage from './pages/Purchases/PurchasesPage'
 import SalesHistoryPage from './pages/Sales/SalesHistoryPage'
 import SuppliersPage from './pages/Suppliers/SuppliersPage'
+import CustomersPage from './pages/Customers/CustomersPage'
 import ReportsPage from './pages/Reports/ReportsPage'
 import SettingsPage from './pages/Settings/SettingsPage'
 
@@ -23,6 +24,7 @@ export default function App() {
               <Route path="/purchases" element={<PurchasesPage />} />
               <Route path="/sales" element={<SalesHistoryPage />} />
               <Route path="/suppliers" element={<SuppliersPage />} />
+              <Route path="/customers" element={<CustomersPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>

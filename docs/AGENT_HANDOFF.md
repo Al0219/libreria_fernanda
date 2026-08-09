@@ -54,6 +54,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Búsqueda local:** La lista de proveedores se filtra instantáneamente por nombre, empresa, NIT, teléfono y correo.
 - **Interfaz:** Muestra el conteo de resultados y un estado vacío cuando no hay coincidencias.
 - **Verificado:** `tsc --noEmit` y `vite build` completaron correctamente.
+## Actualización 2026-08-09: módulo de clientes y ventas
+
+- **Clientes:** Se agregó la ruta `Clientes`, buscador, alta, edición y archivado/reactivación; se preservan los clientes con historial en vez de eliminarlos.
+- **Duplicados:** SQLite normaliza nombre, NIT y teléfono. Impide guardar la misma combinación de nombre/NIT/teléfono, pero permite nombres iguales cuando cambia el NIT o el teléfono.
+- **POS:** El carrito usa `Consumidor final / C/F` por defecto, permite buscar un cliente por nombre, NIT o teléfono y crear uno rápido sin perder la venta en curso; el nuevo cliente queda seleccionado automáticamente.
+- **Ventas y tickets:** La transacción de venta valida que el cliente esté activo y guarda una instantánea del nombre y NIT. Tickets nuevos y reimpresiones usan esa instantánea, incluso si el cliente se edita o archiva después.
+- **Verificado:** Regla de duplicados comprobada con sql.js; `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

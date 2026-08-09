@@ -35,6 +35,14 @@ const api = {
     update: (id: number, data: any) => ipcRenderer.invoke('suppliers:update', id, data),
     delete: (id: number) => ipcRenderer.invoke('suppliers:delete', id),
   },
+  // Clientes
+  customers: {
+    getAll: (filters?: any) => ipcRenderer.invoke('customers:getAll', filters),
+    getById: (id: number) => ipcRenderer.invoke('customers:getById', id),
+    create: (data: any) => ipcRenderer.invoke('customers:create', data),
+    update: (id: number, data: any) => ipcRenderer.invoke('customers:update', id, data),
+    setActive: (id: number, active: boolean) => ipcRenderer.invoke('customers:setActive', id, active),
+  },
   // Entradas de mercancía
   stockEntries: {
     create: (data: any) => ipcRenderer.invoke('stockEntries:create', data),

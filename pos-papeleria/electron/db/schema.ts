@@ -22,6 +22,21 @@ export const suppliers = sqliteTable('suppliers', {
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 })
 
+// ─── Clientes ───────────────────────────────────────────────────────────────
+export const customers = sqliteTable('customers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  name: text('name').notNull(),
+  nameNormalized: text('name_normalized').notNull(),
+  nit: text('nit'),
+  nitNormalized: text('nit_normalized').notNull().default(''),
+  phone: text('phone'),
+  phoneNormalized: text('phone_normalized').notNull().default(''),
+  email: text('email'),
+  address: text('address'),
+  notes: text('notes'),
+  active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+})
 // ─── Productos ────────────────────────────────────────────────────────────────
 export const products = sqliteTable('products', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -71,6 +86,9 @@ export const sales = sqliteTable('sales', {
   amountPaid: real('amount_paid').notNull(),
   changeGiven: real('change_given').notNull().default(0),
   notes: text('notes'),
+  customerId: integer('customer_id').references(() => customers.id),
+  customerName: text('customer_name'),
+  customerNit: text('customer_nit'),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 })
 
