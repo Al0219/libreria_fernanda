@@ -105,6 +105,11 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Desglose:** Incluye gráficas de ventas por día y por tipo de artículo. Este último identifica explícitamente los importes previos a descuentos globales.
 - **Consistencia:** Todas las consultas de reportes —incluidos los puntos ya existentes— excluyen ventas canceladas.
 - **Verificado:** Totales, pagos, días y tipos con ventas canceladas mezcladas comprobados con sql.js; `tsc --noEmit` y `vite build` correctos.
+## Corrección 2026-08-09: carga de Reportes
+
+- **Causa:** Reportes añadía una hora al valor de fecha antes de llamar al helper comercial; el helper ya añade esa hora, generando una fecha inválida.
+- **Solución:** El módulo ahora pasa la fecha comercial sin duplicarla para el título y las gráficas.
+- **Verificado:** Formateo de fecha comercial, `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

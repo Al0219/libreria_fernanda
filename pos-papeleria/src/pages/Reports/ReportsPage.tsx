@@ -50,11 +50,11 @@ function firstDayOfMonth(date: string) {
 }
 
 function formatReportDate(date: string) {
-  return formatBusinessDate(date + 'T12:00:00Z', { day: '2-digit', month: 'short', year: 'numeric' })
+  return formatBusinessDate(date, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function formatChartDate(date: string) {
-  return formatBusinessDate(date + 'T12:00:00Z', { day: '2-digit', month: 'short' })
+  return formatBusinessDate(date, { day: '2-digit', month: 'short' })
 }
 
 export default function ReportsPage() {
