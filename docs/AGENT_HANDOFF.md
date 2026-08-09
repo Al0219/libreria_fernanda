@@ -36,6 +36,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Orden cronológico:** las consultas usan `datetime(created_at)`, por lo que conservan el orden correcto al mezclar registros antiguos y nuevos.
 - **Cobertura adicional:** reportes, tickets PDF y fechas predeterminadas de compras ya usan la misma zona.
 - **Verificado:** límite de las 23:30/00:00, orden de timestamps antiguos/nuevos, `tsc --noEmit` y `vite build`.
+## Actualización 2026-08-09: stock inicial de productos
+
+- **Catálogo:** los productos creados desde Inventario siempre se guardan con stock `0`.
+- **Protección:** el proceso principal ignora cualquier stock inicial recibido y las actualizaciones de producto ya no pueden modificar existencias directamente.
+- **Flujo:** las existencias aumentan mediante Compras; el producto rápido de ese módulo también inicia en `0` antes de registrar la entrada.
+- **Interfaz:** el campo de stock queda informativo y bloqueado al crear o editar un producto.
+- **Verificado:** `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

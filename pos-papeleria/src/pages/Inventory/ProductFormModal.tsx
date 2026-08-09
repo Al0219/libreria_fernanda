@@ -50,7 +50,7 @@ export default function ProductFormModal({ product, categories: initialCategorie
         ...form,
         salePrice: parseFloat(String(form.salePrice)),
         purchasePrice: parseFloat(String(form.purchasePrice)) || 0,
-        stock: parseInt(String(form.stock)) || 0,
+        stock: 0, // Las existencias solo entran por compras o ajustes autorizados
         minStock: parseInt(String(form.minStock)) || 5,
         categoryId: form.categoryId || null,
         supplierId: form.supplierId || null,
@@ -152,7 +152,7 @@ export default function ProductFormModal({ product, categories: initialCategorie
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <div className="form-group">
                 <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  Stock actual
+                  {product ? 'Stock actual' : 'Stock inicial'}
                 </label>
                 <input
                   className="input"
@@ -160,9 +160,11 @@ export default function ProductFormModal({ product, categories: initialCategorie
                   min="0"
                   value={form.stock}
                   onChange={e => set('stock', e.target.value)}
-                  disabled={!!product}
-                  style={product ? { backgroundColor: 'var(--bg-surface)', cursor: 'not-allowed', opacity: 0.8 } : {}}
-                  title={product ? "El stock solo se puede modificar registrando una entrada de mercancía/compra" : ""}
+                  disabled
+                  style={{ backgroundColor: 'var(--bg-surface)', cursor: 'not-allowed', opacity: 0.8 }}
+                  title={product
+                    ? 'El stock solo se puede modificar registrando una entrada de mercancía o compra'
+                    : 'Los productos nuevos inician con stock 0; regístralo después desde Compras'}
                 />
               </div>
               <div className="form-group">

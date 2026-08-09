@@ -62,20 +62,20 @@ export function registerProductHandlers(ipcMain: IpcMain) {
       `INSERT INTO products (name, sku, barcode, category_id, supplier_id, sale_price, purchase_price, stock, min_stock, active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
       [data.name, sku, data.barcode || null, data.categoryId || null, data.supplierId || null,
-       data.salePrice, data.purchasePrice || 0, data.stock || 0, data.minStock || 5]
+       data.salePrice, data.purchasePrice || 0, 0, data.minStock || 5]
     )
     saveDb()
-    return { id, sku, ...data }
+    return { id, sku, ...data, stock: 0 }
   })
 
   ipcMain.handle('products:update', (_e, id: number, data: any) => {
     const db = getDb()
     run(db,
       `UPDATE products SET name=?, sku=?, barcode=?, category_id=?, supplier_id=?,
-       sale_price=?, purchase_price=?, stock=?, min_stock=?, updated_at=datetime('now')
+       sale_price=?, purchase_price=?, min_stock=?, updated_at=datetime('now')
        WHERE id=?`,
       [data.name, data.sku || null, data.barcode || null, data.categoryId || null, data.supplierId || null,
-       data.salePrice, data.purchasePrice || 0, data.stock, data.minStock || 5, id]
+       data.salePrice, data.purchasePrice || 0, data.minStock || 5, id]
     )
     saveDb()
     return { success: true }

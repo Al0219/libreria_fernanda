@@ -56,7 +56,7 @@ export default function PurchaseProductModal({
         supplierId: supplierId ? parseInt(supplierId) : null,
         salePrice: parseFloat(String(form.salePrice)),
         purchasePrice: parseFloat(String(form.purchasePrice)) || 0,
-        stock: 0, // Stock SIEMPRE arranca en 0 como solicitaste
+        stock: 0, // La compra incrementa el stock al registrarse
         minStock: parseInt(String(form.minStock)) || 5,
       }
 
