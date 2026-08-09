@@ -54,6 +54,7 @@ const api = {
   // Reportes
   reports: {
     getSalesByRange: (from: string, to: string) => ipcRenderer.invoke('reports:getSalesByRange', from, to),
+    getOperationalSummary: (from: string, to: string) => ipcRenderer.invoke('reports:getOperationalSummary', from, to),
     getTopProducts: (limit?: number) => ipcRenderer.invoke('reports:getTopProducts', limit),
     getDailyCashRegister: (date?: string) => ipcRenderer.invoke('reports:getDailyCashRegister', date),
     getLowStockReport: () => ipcRenderer.invoke('reports:getLowStockReport'),

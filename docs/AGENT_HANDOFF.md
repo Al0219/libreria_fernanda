@@ -98,6 +98,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Proveedor preferido:** Al registrar una compra se puede marcar el proveedor elegido como preferido para todos los productos de esa entrada. Si no se marca, el proveedor actual del producto se conserva; siempre se guarda la compra y su proveedor en el historial.
 - **Integridad:** El cambio opcional de proveedor se hace dentro de la transacción SQLite y valida que el proveedor exista.
 - **Verificado:** Caso con/sin actualización del proveedor y consulta que excluye compras canceladas comprobados con sql.js; `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: reportes fase 1 — corte operativo
+
+- **Corte por período:** Reportes permite seleccionar fechas manualmente o usar Hoy, últimos 7 días y este mes, siempre según la fecha comercial de Guatemala.
+- **Indicadores:** Muestra número de ventas, ingresos netos, descuentos y efectivo; además desglosa efectivo, tarjeta y transferencia con sus cantidades de ventas.
+- **Desglose:** Incluye gráficas de ventas por día y por tipo de artículo. Este último identifica explícitamente los importes previos a descuentos globales.
+- **Consistencia:** Todas las consultas de reportes —incluidos los puntos ya existentes— excluyen ventas canceladas.
+- **Verificado:** Totales, pagos, días y tipos con ventas canceladas mezcladas comprobados con sql.js; `tsc --noEmit` y `vite build` correctos.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
