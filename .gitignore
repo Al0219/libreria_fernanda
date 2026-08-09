@@ -1,0 +1,20 @@
+# Dependencies
+pos-papeleria/node_modules/
+
+# Build and packaging output
+pos-papeleria/dist/
+pos-papeleria/dist-electron/
+pos-papeleria/release/
+
+# Local configuration and runtime data
+.env
+.env.*
+!.env.example
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Operating-system and editor files
+.DS_Store
+Thumbs.db
+.vscode/
