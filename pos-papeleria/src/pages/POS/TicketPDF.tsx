@@ -5,6 +5,7 @@ import {
   View,
   StyleSheet,
 } from '@react-pdf/renderer'
+import { formatBusinessDate } from '../../lib/business-time'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 export interface TicketData {
@@ -167,7 +168,7 @@ const S = StyleSheet.create({
 export function TicketDocument({ data }: { data: TicketData }) {
   const dateFormatted = (() => {
     try {
-      return new Date(data.date + 'T12:00:00').toLocaleDateString('es-GT', {
+      return formatBusinessDate(data.date, {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
       })
     } catch { return data.date }

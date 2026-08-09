@@ -4,6 +4,7 @@ import { Receipt, Search, Calendar, CreditCard, Banknote, ArrowLeftRight,
 } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 import { api } from '../../lib/api'
+import { formatBusinessDate, formatBusinessTime } from '../../lib/business-time'
 import { TicketDocument, type TicketData } from '../POS/TicketPDF'
 import ConfirmModal from '../../components/ConfirmModal'
 
@@ -49,13 +50,11 @@ function itemTypeIcon(type: string) {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso + 'T00:00:00').toLocaleDateString('es-GT', {
-    day: '2-digit', month: 'short', year: 'numeric'
-  })
+  return formatBusinessDate(iso, { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 function formatTime(isoFull: string) {
-  return new Date(isoFull).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })
+  return formatBusinessTime(isoFull)
 }
 
 // ─── Componente de fila expandible ──────────────────────────────────────────

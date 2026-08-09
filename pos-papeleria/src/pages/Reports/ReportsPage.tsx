@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../lib/api'
+import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
 import { BarChart2, TrendingUp, ShoppingBag, Printer, BookOpen, DollarSign } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
@@ -7,7 +8,7 @@ export default function ReportsPage() {
   const [dailySummary, setDailySummary] = useState<any>(null)
   const [topProducts, setTopProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const today = new Date().toISOString().split('T')[0]
+  const today = getBusinessDate()
 
   useEffect(() => {
     Promise.all([
@@ -42,7 +43,7 @@ export default function ReportsPage() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Reportes</h1>
-          <p className="page-subtitle">Corte del día — {new Date(today + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          <p className="page-subtitle">Corte del día — {formatBusinessDate(today, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
       </div>
 

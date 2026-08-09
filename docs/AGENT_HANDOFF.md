@@ -28,12 +28,20 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Interfaz:** el historial ya no elimina una venta de la pantalla cuando el proceso principal responde que no se pudo cancelar.
 - **Archivos modificados:** `electron/db/helpers.ts`, `electron/ipc/sales.ipc.ts` y `src/pages/Sales/SalesHistoryPage.tsx`.
 - **Verificado:** `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: zona horaria de Guatemala
+
+- **Zona operativa:** se fijó `America/Guatemala` para la fecha comercial; a las 18:00 ya no cambia al día siguiente por UTC.
+- **Ventas y cortes:** creación de venta, folio, ventas del día, resúmenes y corte de caja usan la fecha comercial.
+- **Horas:** las nuevas ventas guardan `created_at` en ISO UTC con `Z`; el historial, tickets y registros heredados se convierten explícitamente a la hora de Guatemala.
+- **Orden cronológico:** las consultas usan `datetime(created_at)`, por lo que conservan el orden correcto al mezclar registros antiguos y nuevos.
+- **Cobertura adicional:** reportes, tickets PDF y fechas predeterminadas de compras ya usan la misma zona.
+- **Verificado:** límite de las 23:30/00:00, orden de timestamps antiguos/nuevos, `tsc --noEmit` y `vite build`.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
-2. Corregir el uso de fechas UTC en ventas (`toISOString()`), ya que desde las 18:00 en Guatemala puede asignar una venta al día siguiente.
-3. Validar stock y cantidades tambien en el proceso principal antes de crear una venta.
-4. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+2. Validar stock y cantidades también en el proceso principal antes de crear una venta.
+3. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+
 
 ## Protocolo de trabajo
 

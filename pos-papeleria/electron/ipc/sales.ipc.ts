@@ -1,6 +1,7 @@
 import { IpcMain } from 'electron'
 import { getDb, saveDb } from '../db/client'
 import { queryAll, queryFirst, run, transaction } from '../db/helpers'
+import { businessDate } from '../lib/business-time'
 
 export function registerSaleHandlers(ipcMain: IpcMain) {
   ipcMain.handle('sales:create', (_e, data: any) => {
@@ -8,7 +9,8 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
     const result = transaction(db, () => {
 
       // Generar folio YYYYMMDD-NNN
-      const todayStr = new Date().toISOString().split('T')[0]
+      const todayStr = businessDate()
+      const createdAt = new Date().toISOString()
       const todayCompact = todayStr.replace(/-/g, '')
       const lastSale = queryFirst(db, `SELECT folio FROM sales WHERE date=? ORDER BY id DESC LIMIT 1`, [todayStr])
       let seq = 1
@@ -20,10 +22,10 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
 
       // Insertar venta
       const saleId = run(db,
-        `INSERT INTO sales (folio, date, subtotal, discount, total, payment_method, amount_paid, change_given, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO sales (folio, date, subtotal, discount, total, payment_method, amount_paid, change_given, notes, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [folio, todayStr, data.subtotal, data.discount || 0, data.total,
-         data.paymentMethod, data.amountPaid, data.changeGiven || 0, data.notes || null]
+         data.paymentMethod, data.amountPaid, data.changeGiven || 0, data.notes || null, createdAt]
       )
 
       // Insertar ítems y descontar stock
@@ -41,7 +43,7 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
         }
       }
 
-      return { id: saleId, folio }
+      return { id: saleId, folio, date: todayStr, createdAt }
     })
     saveDb()
     return result
@@ -72,7 +74,7 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
       params.push(term, term, term)
     }
 
-    sql += ' ORDER BY s.created_at DESC'
+    sql += ' ORDER BY datetime(s.created_at) DESC'
     return queryAll(db, sql, params)
   })
 
@@ -85,8 +87,8 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('sales:getToday', () => {
     const db = getDb()
-    const today = new Date().toISOString().split('T')[0]
-    return queryAll(db, `SELECT * FROM sales WHERE date=? AND (cancelled IS NULL OR cancelled=0) ORDER BY created_at DESC`, [today])
+    const today = businessDate()
+    return queryAll(db, `SELECT * FROM sales WHERE date=? AND (cancelled IS NULL OR cancelled=0) ORDER BY datetime(created_at) DESC`, [today])
   })
 
   ipcMain.handle('sales:cancel', (_e, id: number) => {
@@ -116,9 +118,9 @@ export function registerSaleHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('sales:getDailySummary', (_e, date?: string) => {
     const db = getDb()
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    const targetDate = date || businessDate()
 
-    const sales = queryAll(db, `SELECT * FROM sales WHERE date=? ORDER BY created_at DESC`, [targetDate])
+    const sales = queryAll(db, `SELECT * FROM sales WHERE date=? ORDER BY datetime(created_at) DESC`, [targetDate])
 
     const summary = {
       total_sales: sales.length,

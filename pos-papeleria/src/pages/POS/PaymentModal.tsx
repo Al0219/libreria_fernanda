@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { pdf } from '@react-pdf/renderer'
 import { api } from '../../lib/api'
+import { formatBusinessTime, getBusinessDate } from '../../lib/business-time'
 import { CheckCircle, Banknote, FileText, Printer } from 'lucide-react'
 import { CartItem } from '../../stores/cart.store'
 import { TicketDocument, TicketData } from './TicketPDF'
@@ -25,7 +26,7 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
   const [amountPaid, setAmountPaid] = useState(total.toFixed(2))
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
-  const [saleResult, setSaleResult] = useState<{ folio: string; changeGiven: number } | null>(null)
+  const [saleResult, setSaleResult] = useState<{ folio: string; date: string; createdAt: string; changeGiven: number } | null>(null)
   const [printingPdf, setPrintingPdf] = useState(false)
 
   const change = Math.max(0, parseFloat(amountPaid) - total)
@@ -50,9 +51,9 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
           subtotal: item.subtotal,
           metadataJson: item.metadataJson,
         })),
-      }) as { id: number; folio: string }
+      }) as { id: number; folio: string; date: string; createdAt: string }
 
-      setSaleResult({ folio: result.folio, changeGiven: method === 'cash' ? change : 0 })
+      setSaleResult({ folio: result.folio, date: result.date, createdAt: result.createdAt, changeGiven: method === 'cash' ? change : 0 })
       setDone(true)
     } catch (err) {
       console.error(err)
@@ -67,11 +68,10 @@ export default function PaymentModal({ total, items, onClose, onComplete }: Paym
       // Cargar configuración del negocio
       const config = await api.config.getAll() as Record<string, string>
 
-      const now = new Date()
       const ticketData: TicketData = {
         folio: saleResult.folio,
-        date: now.toISOString().split('T')[0],
-        time: now.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }),
+        date: saleResult.date || getBusinessDate(),
+        time: formatBusinessTime(saleResult.createdAt),
         paymentMethod: method,
         amountPaid: parseFloat(amountPaid),
         changeGiven: saleResult.changeGiven,

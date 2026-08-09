@@ -1,6 +1,7 @@
 import { IpcMain } from 'electron'
 import { getDb, saveDb } from '../db/client'
 import { queryAll, queryFirst, run } from '../db/helpers'
+import { businessDate } from '../lib/business-time'
 
 export function registerReportHandlers(ipcMain: IpcMain) {
   ipcMain.handle('reports:getSalesByRange', (_e, from: string, to: string) => {
@@ -21,9 +22,9 @@ export function registerReportHandlers(ipcMain: IpcMain) {
 
   ipcMain.handle('reports:getDailyCashRegister', (_e, date?: string) => {
     const db = getDb()
-    const targetDate = date || new Date().toISOString().split('T')[0]
+    const targetDate = date || businessDate()
 
-    const sales = queryAll(db, `SELECT * FROM sales WHERE date=? ORDER BY created_at DESC`, [targetDate])
+    const sales = queryAll(db, `SELECT * FROM sales WHERE date=? ORDER BY datetime(created_at) DESC`, [targetDate])
 
     const summary = {
       total_sales: sales.length,

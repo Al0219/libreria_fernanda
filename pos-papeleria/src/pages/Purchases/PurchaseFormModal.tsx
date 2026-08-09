@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Plus, Trash2, ShoppingBag, Search, AlertCircle } from 'lucide-react'
 import { api } from '../../lib/api'
+import { getBusinessDate } from '../../lib/business-time'
 import PurchaseProductModal from './PurchaseProductModal'
 
 interface PurchaseFormModalProps {
@@ -22,7 +23,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
   const [suppliers, setSuppliers] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
   const [supplierId, setSupplierId] = useState<string>('')
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [date, setDate] = useState<string>(getBusinessDate())
   const [notes, setNotes] = useState<string>('')
   
   // Lista de items del formulario
@@ -106,7 +107,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
     try {
       const payload = {
         supplierId: supplierId ? parseInt(supplierId) : null,
-        date: date || new Date().toISOString().split('T')[0],
+        date: date || getBusinessDate(),
         totalAmount,
         notes: notes.trim() || null,
         items: items.map(i => ({
