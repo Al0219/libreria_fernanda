@@ -151,9 +151,18 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Sin movimiento:** El período del filtro de Reportes identifica productos que no tuvieron ninguna compra ni venta activa dentro de esas fechas. Muestra el último movimiento válido conocido y excluye compras o ventas canceladas.
 - **Verificado:** prueba SQLite de valorización, bajo stock, agotados y movimientos cancelados; `npx tsc --noEmit` y `npx vite build` correctos.
 
+## Actualización 2026-08-09: reportes fase 4 — compras y proveedores
+
+- **Compras por período:** Reportes resume costo invertido, compras registradas, unidades adquiridas, costo unitario ponderado y una serie diaria de entradas.
+- **Filtros y desglose:** Permite limitar el reporte por proveedor y/o producto, con rankings de inversión, unidades, compras y costo promedio para ambos. Las opciones se forman con las compras activas del período.
+- **Precios históricos:** Para el producto elegido —o el de mayor inversión si no se selecciona uno— muestra costo y precio de venta históricos de cada línea de compra. Los valores corresponden al momento de registrar la compra, no al producto actual.
+- **Consistencia:** Todos los indicadores, filtros, rankings y gráficas excluyen compras canceladas.
+- **Verificado:** prueba SQLite con proveedores, productos, filtros y una compra cancelada; `npx tsc --noEmit` y `npx vite build` correctos.
+
 ## Pendiente inmediato
 
-1. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
-2. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
-3. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
-4. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+1. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
+2. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
+3. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+4. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+5. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.

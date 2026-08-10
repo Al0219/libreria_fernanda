@@ -127,6 +127,76 @@ export function registerReportHandlers(ipcMain: IpcMain) {
 
     return { summary: { ...summary, without_movement_count: withoutMovement.length }, lowStock, outOfStock, withoutMovement, from, to }
   })
+  ipcMain.handle('reports:getPurchasesReport', (_e, from: string, to: string, filters?: { supplierId?: number; productId?: number }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+      throw new Error('Rango de fechas inválido para el reporte de compras.')
+    }
+
+    const db = getDb()
+    const supplierId = Number(filters?.supplierId) > 0 ? Number(filters?.supplierId) : null
+    const productId = Number(filters?.productId) > 0 ? Number(filters?.productId) : null
+    const rangeWhere = ['se.date BETWEEN ? AND ?', '(se.cancelled IS NULL OR se.cancelled=0)']
+    const rangeParams: any[] = [from, to]
+    if (supplierId) { rangeWhere.push('se.supplier_id=?'); rangeParams.push(supplierId) }
+    if (productId) { rangeWhere.push('sei.product_id=?'); rangeParams.push(productId) }
+    const where = rangeWhere.join(' AND ')
+    const baseJoin = 'FROM stock_entries se JOIN stock_entry_items sei ON sei.entry_id=se.id LEFT JOIN suppliers s ON s.id=se.supplier_id LEFT JOIN products p ON p.id=sei.product_id '
+
+    const summary = queryFirst(db,
+      'SELECT COUNT(DISTINCT se.id) as purchase_count, COALESCE(SUM(sei.quantity), 0) as total_units, ' +
+      'COALESCE(SUM(sei.subtotal), 0) as total_invested, COUNT(DISTINCT se.supplier_id) as supplier_count, ' +
+      'COALESCE(SUM(sei.subtotal) / NULLIF(SUM(sei.quantity), 0), 0) as weighted_unit_cost ' +
+      baseJoin + 'WHERE ' + where,
+      rangeParams
+    ) || { purchase_count: 0, total_units: 0, total_invested: 0, supplier_count: 0, weighted_unit_cost: 0 }
+
+    const trend = queryAll(db,
+      'SELECT se.date, COUNT(DISTINCT se.id) as purchase_count, COALESCE(SUM(sei.quantity), 0) as units, COALESCE(SUM(sei.subtotal), 0) as total ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY se.date ORDER BY se.date ASC',
+      rangeParams
+    )
+
+    const suppliers = queryAll(db,
+      "SELECT COALESCE(s.name, 'Compra general') as name, s.id as supplier_id, COUNT(DISTINCT se.id) as purchase_count, " +
+      'COALESCE(SUM(sei.quantity), 0) as units, COALESCE(SUM(sei.subtotal), 0) as total ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY s.id, s.name ORDER BY total DESC, units DESC',
+      rangeParams
+    )
+
+    const products = queryAll(db,
+      "SELECT COALESCE(p.name, 'Producto #' || sei.product_id) as name, sei.product_id as product_id, p.sku, " +
+      'COUNT(DISTINCT se.id) as purchase_count, COALESCE(SUM(sei.quantity), 0) as units, COALESCE(SUM(sei.subtotal), 0) as total, ' +
+      'COALESCE(SUM(sei.subtotal) / NULLIF(SUM(sei.quantity), 0), 0) as average_cost ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY sei.product_id, p.name, p.sku ORDER BY total DESC, units DESC',
+      rangeParams
+    )
+
+    const optionWhere = 'se.date BETWEEN ? AND ? AND (se.cancelled IS NULL OR se.cancelled=0)'
+    const suppliersForFilter = queryAll(db,
+      'SELECT DISTINCT s.id, s.name FROM stock_entries se JOIN suppliers s ON s.id=se.supplier_id WHERE ' + optionWhere + ' ORDER BY s.name ASC',
+      [from, to]
+    )
+    const productsForFilter = queryAll(db,
+      'SELECT DISTINCT p.id, p.name, p.sku FROM stock_entries se JOIN stock_entry_items sei ON sei.entry_id=se.id JOIN products p ON p.id=sei.product_id WHERE ' + optionWhere + ' ORDER BY p.name ASC',
+      [from, to]
+    )
+
+    const historyProductId = productId || Number(products[0]?.product_id || 0)
+    let priceHistory: any[] = []
+    if (historyProductId) {
+      const historyWhere = ['sei.product_id=?', 'se.date BETWEEN ? AND ?', '(se.cancelled IS NULL OR se.cancelled=0)']
+      const historyParams: any[] = [historyProductId, from, to]
+      if (supplierId) { historyWhere.push('se.supplier_id=?'); historyParams.push(supplierId) }
+      priceHistory = queryAll(db,
+        "SELECT se.id as entry_id, se.date, COALESCE(s.name, 'Compra general') as supplier_name, sei.quantity, sei.purchase_price, sei.sale_price " +
+        'FROM stock_entry_items sei JOIN stock_entries se ON se.id=sei.entry_id LEFT JOIN suppliers s ON s.id=se.supplier_id ' +
+        'WHERE ' + historyWhere.join(' AND ') + ' ORDER BY se.date ASC, se.id ASC, sei.id ASC',
+        historyParams
+      )
+    }
+
+    return { summary, trend, suppliers, products, suppliersForFilter, productsForFilter, selectedProductId: historyProductId || null, priceHistory, from, to }
+  })
   ipcMain.handle('reports:getSalesPerformance', (_e, from: string, to: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
     const db = getDb()
     const start = new Date(from + 'T00:00:00Z')

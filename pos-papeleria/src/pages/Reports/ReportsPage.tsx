@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../lib/api'
 import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
-import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, Clock3, CreditCard, Landmark, Layers3, Package, PackageX, TrendingUp, Wrench } from 'lucide-react'
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, CircleDollarSign, Clock3, CreditCard, Landmark, Layers3, Package, PackageSearch, PackageX, ShoppingBag, TrendingUp, Truck, Wrench } from 'lucide-react'
+import { Bar, BarChart, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Summary {
   total_sales: number
@@ -93,6 +93,60 @@ interface InventoryStatus {
   lowStock: InventoryProduct[]
   outOfStock: InventoryProduct[]
   withoutMovement: InventoryProduct[]
+  from: string
+  to: string
+}
+
+interface PurchaseSummary {
+  purchase_count: number
+  total_units: number
+  total_invested: number
+  supplier_count: number
+  weighted_unit_cost: number
+}
+
+interface PurchaseTrend {
+  date: string
+  purchase_count: number
+  units: number
+  total: number
+}
+
+interface PurchaseRank {
+  name: string
+  supplier_id?: number | null
+  product_id?: number
+  sku?: string | null
+  purchase_count: number
+  units: number
+  total: number
+  average_cost?: number
+}
+
+interface PurchaseOption {
+  id: number
+  name: string
+  sku?: string | null
+}
+
+interface PurchasePricePoint {
+  entry_id: number
+  date: string
+  supplier_name: string
+  quantity: number
+  purchase_price: number
+  sale_price: number
+}
+
+interface PurchasesReport {
+  summary: PurchaseSummary
+  trend: PurchaseTrend[]
+  suppliers: PurchaseRank[]
+  products: PurchaseRank[]
+  suppliersForFilter: PurchaseOption[]
+  productsForFilter: PurchaseOption[]
+  selectedProductId: number | null
+  priceHistory: PurchasePricePoint[]
   from: string
   to: string
 }
@@ -213,6 +267,30 @@ function InventoryTable({ title, subtitle, icon: Icon, items, accent, showMoveme
     </div>
   )
 }
+function PurchaseRankingTable({ title, subtitle, icon: Icon, items, accent, productRows = false }: {
+  title: string
+  subtitle: string
+  icon: any
+  items: PurchaseRank[]
+  accent: string
+  productRows?: boolean
+}) {
+  return (
+    <div className="card">
+      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><Icon size={16} style={{ color: accent }} />{title}</h3>
+      <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>{subtitle}</p>
+      {items.length === 0 ? <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>Sin compras activas en este período.</div> : (
+        <div className="table-container"><table><thead><tr><th>#</th><th>{productRows ? 'Producto' : 'Proveedor'}</th><th style={{ textAlign: 'right' }}>Unid.</th><th style={{ textAlign: 'right' }}>Invertido</th><th style={{ textAlign: 'right' }}>Costo prom.</th></tr></thead><tbody>
+          {items.map((item, index) => <tr key={(item.product_id || item.supplier_id || item.name) + '-' + index}>
+            <td style={{ color: 'var(--text-muted)', fontWeight: 700 }}>{index + 1}</td>
+            <td><div style={{ fontWeight: 600 }}>{item.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{productRows ? (item.sku || Number(item.purchase_count || 0) + ' compra(s)') : Number(item.purchase_count || 0) + ' compra(s)'}</div></td>
+            <td style={{ textAlign: 'right' }}>{Number(item.units || 0)}</td><td style={{ textAlign: 'right', color: accent, fontWeight: 700 }}>{formatMoney(Number(item.total || 0))}</td><td style={{ textAlign: 'right' }}>{formatMoney(Number(item.average_cost ?? (Number(item.total || 0) / Math.max(Number(item.units || 0), 1))))}</td>
+          </tr>)}
+        </tbody></table></div>
+      )}
+    </div>
+  )
+}
 export default function ReportsPage() {
   const today = getBusinessDate()
   const [from, setFrom] = useState(today)
@@ -221,6 +299,9 @@ export default function ReportsPage() {
   const [report, setReport] = useState<OperationalReport | null>(null)
   const [performance, setPerformance] = useState<SalesPerformance | null>(null)
   const [inventory, setInventory] = useState<InventoryStatus | null>(null)
+  const [purchases, setPurchases] = useState<PurchasesReport | null>(null)
+  const [purchaseSupplierId, setPurchaseSupplierId] = useState<number | ''>('')
+  const [purchaseProductId, setPurchaseProductId] = useState<number | ''>('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -239,12 +320,14 @@ export default function ReportsPage() {
       api.reports.getOperationalSummary(from, to),
       api.reports.getSalesPerformance(from, to, groupBy),
       api.reports.getInventoryStatus(from, to),
+      api.reports.getPurchasesReport(from, to, { supplierId: purchaseSupplierId || undefined, productId: purchaseProductId || undefined }),
     ])
-      .then(([operational, salesPerformance, inventoryStatus]: any[]) => {
+      .then(([operational, salesPerformance, inventoryStatus, purchasesReport]: any[]) => {
         if (!active) return
         setReport(operational as OperationalReport)
         setPerformance(salesPerformance as SalesPerformance)
         setInventory(inventoryStatus as InventoryStatus)
+        setPurchases(purchasesReport as PurchasesReport)
       })
       .catch(() => {
         if (active) setError('No se pudo cargar el reporte. Intenta nuevamente.')
@@ -254,7 +337,7 @@ export default function ReportsPage() {
       })
 
     return () => { active = false }
-  }, [from, to, groupBy])
+  }, [from, to, groupBy, purchaseSupplierId, purchaseProductId])
 
   const summary = report?.summary
   const inventorySummary = inventory?.summary
@@ -283,6 +366,10 @@ export default function ReportsPage() {
     count: Number(row.count),
   })), [performance, groupBy])
 
+  const purchaseTrendData = useMemo(() => (purchases?.trend || []).map(row => ({ name: formatChartDate(row.date), total: Number(row.total), count: Number(row.purchase_count), units: Number(row.units) })), [purchases])
+  const priceHistoryData = useMemo(() => (purchases?.priceHistory || []).map(row => ({ name: formatChartDate(row.date) + ' #' + row.entry_id, cost: Number(row.purchase_price), price: Number(row.sale_price), supplier: row.supplier_name, quantity: Number(row.quantity) })), [purchases])
+  const priceHistoryProduct = purchases?.products.find(product => Number(product.product_id) === Number(purchases?.selectedProductId))
+
   const paymentRows = [
     { label: 'Efectivo', value: summary?.cash_total || 0, count: summary?.cash_count || 0, icon: Banknote, color: '#f59e0b' },
     { label: 'Tarjeta', value: summary?.card_total || 0, count: summary?.card_count || 0, icon: CreditCard, color: '#3b82f6' },
@@ -299,7 +386,7 @@ export default function ReportsPage() {
     setTo(today)
   }
 
-  if (loading && (!report || !performance || !inventory)) {
+  if (loading && (!report || !performance || !inventory || !purchases)) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando reportes...</div>
   }
 
@@ -334,6 +421,11 @@ export default function ReportsPage() {
         </div>
       </div>
 
+      <div className="card" style={{ marginBottom: 16, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ margin: 0, minWidth: 220 }}><label className="form-label">Proveedor para compras</label><select className="select" value={purchaseSupplierId} onChange={event => setPurchaseSupplierId(event.target.value ? Number(event.target.value) : '')}><option value="">Todos los proveedores</option>{(purchases?.suppliersForFilter || []).map(supplier => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
+        <div className="form-group" style={{ margin: 0, minWidth: 240 }}><label className="form-label">Producto para compras y evolución</label><select className="select" value={purchaseProductId} onChange={event => setPurchaseProductId(event.target.value ? Number(event.target.value) : '')}><option value="">Producto con mayor inversión</option>{(purchases?.productsForFilter || []).map(product => <option key={product.id} value={product.id}>{product.name}{product.sku ? ' · ' + product.sku : ''}</option>)}</select></div>
+        {(purchaseSupplierId || purchaseProductId) && <button className="btn btn-ghost btn-sm" onClick={() => { setPurchaseSupplierId(''); setPurchaseProductId('') }}>Limpiar filtros de compras</button>}
+      </div>
       {error ? (
         <div style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', color: 'var(--accent-danger)', background: 'rgba(239,68,68,0.1)', border: '1px solid var(--accent-danger)' }}>{error}</div>
       ) : (
@@ -412,6 +504,30 @@ export default function ReportsPage() {
             <InventoryTable title="Bajo stock" subtitle="Con existencia, pero en o debajo del mínimo" icon={AlertTriangle} items={inventory?.lowStock || []} accent="#f59e0b" />
             <InventoryTable title="Agotados" subtitle="Productos activos sin unidades disponibles" icon={PackageX} items={inventory?.outOfStock || []} accent="#ef4444" />
             <InventoryTable title="Sin movimiento" subtitle="Sin compras ni ventas activas del período" icon={Clock3} items={inventory?.withoutMovement || []} accent="#8b5cf6" showMovement />
+          </div>
+
+          <div style={{ margin: '30px 0 12px' }}>
+            <h2 style={{ fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><ShoppingBag size={20} style={{ color: 'var(--accent-primary)' }} />Compras y proveedores</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '5px 0 0' }}>Entradas activas del período seleccionado. Las compras canceladas no se incluyen en ningún total ni evolución.</p>
+          </div>
+
+          <div className="grid-cols-4" style={{ marginBottom: 16 }}>
+            {[
+              { label: 'Costo invertido', value: formatMoney(Number(purchases?.summary.total_invested || 0)), icon: CircleDollarSign, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+              { label: 'Compras registradas', value: Number(purchases?.summary.purchase_count || 0), icon: ShoppingBag, color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+              { label: 'Unidades adquiridas', value: Number(purchases?.summary.total_units || 0), icon: Package, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+              { label: 'Costo unitario prom.', value: formatMoney(Number(purchases?.summary.weighted_unit_cost || 0)), icon: Truck, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+            ].map(({ label, value, icon: Icon, color, bg }) => <div key={label} className="stat-card"><div className="stat-icon" style={{ background: bg }}><Icon size={20} style={{ color }} /></div><div><div className="stat-label">{label}</div><div className="stat-value" style={{ color }}>{value}</div></div></div>)}
+          </div>
+
+          <div className="grid-cols-2" style={{ marginBottom: 16 }}>
+            <div className="card"><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 5, display: 'flex', gap: 7, alignItems: 'center' }}><ShoppingBag size={16} style={{ color: 'var(--accent-primary)' }} />Compras por día</h3><p style={{ margin: '0 0 16px', fontSize: 12, color: 'var(--text-muted)' }}>Costo invertido según las líneas registradas.</p>{purchaseTrendData.length === 0 ? <div style={{ textAlign: 'center', padding: 36, color: 'var(--text-muted)', fontSize: 13 }}>No hay compras activas en este período.</div> : <ResponsiveContainer width="100%" height={230}><BarChart data={purchaseTrendData} margin={{ top: 4, right: 0, left: -12, bottom: 0 }}><XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 13 }} formatter={(value: any, _name: string, item: any) => [formatMoney(Number(value)), Number(item.payload.count) + ' compra(s), ' + Number(item.payload.units) + ' unid.']} /><Bar dataKey="total" radius={[6, 6, 0, 0]} fill="#06b6d4" /></BarChart></ResponsiveContainer>}</div>
+            <div className="card"><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 5, display: 'flex', gap: 7, alignItems: 'center' }}><PackageSearch size={16} style={{ color: '#8b5cf6' }} />Evolución de costo y precio{priceHistoryProduct ? ': ' + priceHistoryProduct.name : ''}</h3><p style={{ margin: '0 0 16px', fontSize: 12, color: 'var(--text-muted)' }}>Precios históricos guardados en cada compra del producto seleccionado. <span style={{ color: '#f59e0b', fontWeight: 700 }}>● Costo</span> · <span style={{ color: '#10b981', fontWeight: 700 }}>● Precio de venta</span></p>{priceHistoryData.length === 0 ? <div style={{ textAlign: 'center', padding: 36, color: 'var(--text-muted)', fontSize: 13 }}>Selecciona un producto con compras en este período.</div> : <ResponsiveContainer width="100%" height={230}><LineChart data={priceHistoryData} margin={{ top: 4, right: 5, left: -12, bottom: 0 }}><XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 13 }} formatter={(value: any, name: string, item: any) => [formatMoney(Number(value)), name === 'cost' ? 'Costo · ' + item.payload.supplier : 'Precio de venta']} /><Line type="monotone" dataKey="cost" name="cost" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3 }} /><Line type="monotone" dataKey="price" name="price" stroke="#10b981" strokeWidth={2.5} dot={{ r: 3 }} /></LineChart></ResponsiveContainer>}</div>
+          </div>
+
+          <div className="grid-cols-2">
+            <PurchaseRankingTable title="Compras por proveedor" subtitle="Inversión acumulada por proveedor" icon={Truck} items={purchases?.suppliers || []} accent="#3b82f6" />
+            <PurchaseRankingTable title="Compras por producto" subtitle="Costo e historial del producto adquirido" icon={Package} items={purchases?.products || []} accent="#10b981" productRows />
           </div>
         </>
       )}
