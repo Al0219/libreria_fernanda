@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../lib/api'
 import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
-import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, CircleDollarSign, Clock3, CreditCard, Landmark, Layers3, Package, PackageSearch, PackageX, ShoppingBag, TrendingUp, Truck, Wrench } from 'lucide-react'
+import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, CircleDollarSign, Clock3, CreditCard, Landmark, Layers3, Package, PackageSearch, PackageX, ReceiptText, ShoppingBag, TrendingUp, Truck, UserRoundCheck, UsersRound, Wrench } from 'lucide-react'
 import { Bar, BarChart, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Summary {
@@ -151,6 +151,54 @@ interface PurchasesReport {
   to: string
 }
 
+interface CustomerSummary {
+  customer_count: number
+  sale_count: number
+  total_revenue: number
+  average_ticket: number
+}
+
+interface CustomerRank {
+  customer_id: number
+  customer_name: string
+  customer_nit?: string | null
+  sale_count: number
+  active_days: number
+  total_spent: number
+  average_ticket: number
+  first_sale_date: string
+  last_sale_date: string
+}
+
+interface CustomerOption {
+  id: number
+  name: string
+  nit?: string | null
+}
+
+interface CustomerSale {
+  id: number
+  folio: string
+  date: string
+  created_at: string
+  payment_method: string
+  total: number
+  discount: number
+  amount_paid: number
+  item_count: number
+  units: number
+}
+
+interface CustomerReport {
+  summary: CustomerSummary
+  customers: CustomerRank[]
+  customersForFilter: CustomerOption[]
+  selectedCustomerId: number | null
+  sales: CustomerSale[]
+  from: string
+  to: string
+}
+
 type GroupBy = 'day' | 'week' | 'month'
 
 const formatMoney = (value: number) => 'Q' + Number(value || 0).toFixed(2)
@@ -291,6 +339,10 @@ function PurchaseRankingTable({ title, subtitle, icon: Icon, items, accent, prod
     </div>
   )
 }
+function CustomerRankingTable({ items, from, to }: { items: CustomerRank[]; from: string; to: string }) {
+  const periodDays = Math.max(1, Math.round((new Date(to + 'T00:00:00Z').getTime() - new Date(from + 'T00:00:00Z').getTime()) / 86400000) + 1)
+  return <div className="card"><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><UsersRound size={16} style={{ color: '#8b5cf6' }} />Clientes con más compras</h3><p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>Ordenados por monto acumulado en el período.</p>{items.length === 0 ? <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>No hay ventas activas con cliente en este período.</div> : <div className="table-container"><table><thead><tr><th>#</th><th>Cliente</th><th style={{ textAlign: 'right' }}>Compras</th><th>Frecuencia</th><th style={{ textAlign: 'right' }}>Monto acumulado</th></tr></thead><tbody>{items.map((item, index) => { const every = Math.max(1, Math.round(periodDays / Number(item.sale_count || 1))); return <tr key={item.customer_id}><td style={{ color: 'var(--text-muted)', fontWeight: 700 }}>{index + 1}</td><td><div style={{ fontWeight: 600 }}>{item.customer_name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.customer_nit ? 'NIT: ' + item.customer_nit : 'Sin NIT'} · Ticket prom. {formatMoney(Number(item.average_ticket || 0))}</div></td><td style={{ textAlign: 'right', fontWeight: 700 }}>{Number(item.sale_count || 0)}</td><td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{Number(item.sale_count) === 1 ? 'Una compra' : 'Cada ~' + every + ' día(s)'}<div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{Number(item.active_days || 0)} día(s) con compra</div></td><td style={{ textAlign: 'right', color: '#8b5cf6', fontWeight: 800 }}>{formatMoney(Number(item.total_spent || 0))}</td></tr> })}</tbody></table></div>}</div>
+}
 export default function ReportsPage() {
   const today = getBusinessDate()
   const [from, setFrom] = useState(today)
@@ -300,6 +352,8 @@ export default function ReportsPage() {
   const [performance, setPerformance] = useState<SalesPerformance | null>(null)
   const [inventory, setInventory] = useState<InventoryStatus | null>(null)
   const [purchases, setPurchases] = useState<PurchasesReport | null>(null)
+  const [customerReport, setCustomerReport] = useState<CustomerReport | null>(null)
+  const [reportCustomerId, setReportCustomerId] = useState<number | ''>('')
   const [purchaseSupplierId, setPurchaseSupplierId] = useState<number | ''>('')
   const [purchaseProductId, setPurchaseProductId] = useState<number | ''>('')
   const [loading, setLoading] = useState(true)
@@ -321,13 +375,15 @@ export default function ReportsPage() {
       api.reports.getSalesPerformance(from, to, groupBy),
       api.reports.getInventoryStatus(from, to),
       api.reports.getPurchasesReport(from, to, { supplierId: purchaseSupplierId || undefined, productId: purchaseProductId || undefined }),
+      api.reports.getCustomerReport(from, to, { customerId: reportCustomerId || undefined }),
     ])
-      .then(([operational, salesPerformance, inventoryStatus, purchasesReport]: any[]) => {
+      .then(([operational, salesPerformance, inventoryStatus, purchasesReport, customersReport]: any[]) => {
         if (!active) return
         setReport(operational as OperationalReport)
         setPerformance(salesPerformance as SalesPerformance)
         setInventory(inventoryStatus as InventoryStatus)
         setPurchases(purchasesReport as PurchasesReport)
+        setCustomerReport(customersReport as CustomerReport)
       })
       .catch(() => {
         if (active) setError('No se pudo cargar el reporte. Intenta nuevamente.')
@@ -337,7 +393,7 @@ export default function ReportsPage() {
       })
 
     return () => { active = false }
-  }, [from, to, groupBy, purchaseSupplierId, purchaseProductId])
+  }, [from, to, groupBy, purchaseSupplierId, purchaseProductId, reportCustomerId])
 
   const summary = report?.summary
   const inventorySummary = inventory?.summary
@@ -369,6 +425,8 @@ export default function ReportsPage() {
   const purchaseTrendData = useMemo(() => (purchases?.trend || []).map(row => ({ name: formatChartDate(row.date), total: Number(row.total), count: Number(row.purchase_count), units: Number(row.units) })), [purchases])
   const priceHistoryData = useMemo(() => (purchases?.priceHistory || []).map(row => ({ name: formatChartDate(row.date) + ' #' + row.entry_id, cost: Number(row.purchase_price), price: Number(row.sale_price), supplier: row.supplier_name, quantity: Number(row.quantity) })), [purchases])
   const priceHistoryProduct = purchases?.products.find(product => Number(product.product_id) === Number(purchases?.selectedProductId))
+  const selectedCustomer = customerReport?.customers.find(customer => Number(customer.customer_id) === Number(customerReport?.selectedCustomerId))
+  const paymentLabels: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', credit: 'Crédito' }
 
   const paymentRows = [
     { label: 'Efectivo', value: summary?.cash_total || 0, count: summary?.cash_count || 0, icon: Banknote, color: '#f59e0b' },
@@ -386,7 +444,7 @@ export default function ReportsPage() {
     setTo(today)
   }
 
-  if (loading && (!report || !performance || !inventory || !purchases)) {
+  if (loading && (!report || !performance || !inventory || !purchases || !customerReport)) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando reportes...</div>
   }
 
@@ -425,6 +483,10 @@ export default function ReportsPage() {
         <div className="form-group" style={{ margin: 0, minWidth: 220 }}><label className="form-label">Proveedor para compras</label><select className="select" value={purchaseSupplierId} onChange={event => setPurchaseSupplierId(event.target.value ? Number(event.target.value) : '')}><option value="">Todos los proveedores</option>{(purchases?.suppliersForFilter || []).map(supplier => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
         <div className="form-group" style={{ margin: 0, minWidth: 240 }}><label className="form-label">Producto para compras y evolución</label><select className="select" value={purchaseProductId} onChange={event => setPurchaseProductId(event.target.value ? Number(event.target.value) : '')}><option value="">Producto con mayor inversión</option>{(purchases?.productsForFilter || []).map(product => <option key={product.id} value={product.id}>{product.name}{product.sku ? ' · ' + product.sku : ''}</option>)}</select></div>
         {(purchaseSupplierId || purchaseProductId) && <button className="btn btn-ghost btn-sm" onClick={() => { setPurchaseSupplierId(''); setPurchaseProductId('') }}>Limpiar filtros de compras</button>}
+      </div>
+      <div className="card" style={{ marginBottom: 16, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ margin: 0, minWidth: 280 }}><label className="form-label">Cliente para historial comercial</label><select className="select" value={reportCustomerId} onChange={event => setReportCustomerId(event.target.value ? Number(event.target.value) : '')}><option value="">Cliente con mayor monto del período</option>{(customerReport?.customersForFilter || []).map(customer => <option key={customer.id} value={customer.id}>{customer.name}{customer.nit ? ' · NIT: ' + customer.nit : ''}</option>)}</select></div>
+        {reportCustomerId && <button className="btn btn-ghost btn-sm" onClick={() => setReportCustomerId('')}>Limpiar cliente</button>}
       </div>
       {error ? (
         <div style={{ padding: '12px 16px', borderRadius: 'var(--radius-md)', color: 'var(--accent-danger)', background: 'rgba(239,68,68,0.1)', border: '1px solid var(--accent-danger)' }}>{error}</div>
@@ -528,6 +590,28 @@ export default function ReportsPage() {
           <div className="grid-cols-2">
             <PurchaseRankingTable title="Compras por proveedor" subtitle="Inversión acumulada por proveedor" icon={Truck} items={purchases?.suppliers || []} accent="#3b82f6" />
             <PurchaseRankingTable title="Compras por producto" subtitle="Costo e historial del producto adquirido" icon={Package} items={purchases?.products || []} accent="#10b981" productRows />
+          </div>
+
+          <div style={{ margin: '30px 0 12px' }}>
+            <h2 style={{ fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><UsersRound size={20} style={{ color: 'var(--accent-primary)' }} />Clientes e historial comercial</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '5px 0 0' }}>Solo ventas activas con un cliente seleccionado; las ventas de mostrador se excluyen del análisis comercial.</p>
+          </div>
+
+          <div className="grid-cols-4" style={{ marginBottom: 16 }}>
+            {[
+              { label: 'Clientes atendidos', value: Number(customerReport?.summary.customer_count || 0), icon: UsersRound, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+              { label: 'Compras de clientes', value: Number(customerReport?.summary.sale_count || 0), icon: ReceiptText, color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+              { label: 'Monto acumulado', value: formatMoney(Number(customerReport?.summary.total_revenue || 0)), icon: TrendingUp, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+              { label: 'Ticket promedio', value: formatMoney(Number(customerReport?.summary.average_ticket || 0)), icon: UserRoundCheck, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+            ].map(({ label, value, icon: Icon, color, bg }) => <div key={label} className="stat-card"><div className="stat-icon" style={{ background: bg }}><Icon size={20} style={{ color }} /></div><div><div className="stat-label">{label}</div><div className="stat-value" style={{ color }}>{value}</div></div></div>)}
+          </div>
+
+          <div style={{ marginBottom: 16 }}><CustomerRankingTable items={customerReport?.customers || []} from={from} to={to} /></div>
+
+          <div className="card">
+            <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><ReceiptText size={16} style={{ color: 'var(--accent-primary)' }} />Historial detallado{selectedCustomer ? ': ' + selectedCustomer.customer_name : ''}</h3>
+            <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>{selectedCustomer ? 'Ventas activas de ' + selectedCustomer.customer_name + ' dentro del período seleccionado.' : 'Selecciona un cliente con compras en este período.'}</p>
+            {(customerReport?.sales || []).length === 0 ? <div style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)', fontSize: 13 }}>No hay ventas activas para este cliente.</div> : <div className="table-container"><table><thead><tr><th>Fecha / folio</th><th>Pago</th><th style={{ textAlign: 'right' }}>Artículos</th><th style={{ textAlign: 'right' }}>Descuento</th><th style={{ textAlign: 'right' }}>Total</th></tr></thead><tbody>{(customerReport?.sales || []).map(sale => <tr key={sale.id}><td><div style={{ fontWeight: 600 }}>{formatReportDate(sale.date)}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Folio {sale.folio}</div></td><td><span className="badge">{paymentLabels[sale.payment_method] || sale.payment_method}</span></td><td style={{ textAlign: 'right' }}>{Number(sale.item_count || 0)} línea(s)<div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{Number(sale.units || 0)} unid.</div></td><td style={{ textAlign: 'right', color: Number(sale.discount || 0) > 0 ? 'var(--accent-danger)' : 'var(--text-muted)' }}>{Number(sale.discount || 0) > 0 ? formatMoney(Number(sale.discount)) : '—'}</td><td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--accent-success)' }}>{formatMoney(Number(sale.total || 0))}</td></tr>)}</tbody></table></div>}
           </div>
         </>
       )}

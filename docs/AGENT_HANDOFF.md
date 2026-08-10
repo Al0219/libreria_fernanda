@@ -159,10 +159,19 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Consistencia:** Todos los indicadores, filtros, rankings y gráficas excluyen compras canceladas.
 - **Verificado:** prueba SQLite con proveedores, productos, filtros y una compra cancelada; `npx tsc --noEmit` y `npx vite build` correctos.
 
+## Actualización 2026-08-09: reportes fase 5 — clientes e historial comercial
+
+- **Resumen comercial:** Reportes muestra clientes atendidos, número de compras con cliente, monto acumulado y ticket promedio para el período seleccionado.
+- **Ranking y frecuencia:** Ordena clientes por monto acumulado, incluye compras, días con actividad y una frecuencia aproximada dentro del rango de fechas; permite elegir un cliente concreto.
+- **Historial detallado:** Muestra las ventas activas del cliente elegido —o del cliente con mayor monto por defecto— con fecha, folio, medio de pago, artículos, descuentos y total.
+- **Consistencia:** Solo se consideran ventas activas con `customer_id`; ventas canceladas y ventas de mostrador no alteran totales, ranking ni historial.
+- **Verificado:** prueba SQLite con dos clientes, venta cancelada y venta sin cliente; `npx tsc --noEmit` y `npx vite build` correctos.
+
 ## Pendiente inmediato
 
-1. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
-2. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
-3. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
-4. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
-5. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+1. Prueba manual: seleccionar un cliente con varias compras y comprobar su frecuencia, total e historial al cambiar el rango de Reportes.
+2. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
+3. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
+4. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+5. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+6. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.

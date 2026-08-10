@@ -197,6 +197,53 @@ export function registerReportHandlers(ipcMain: IpcMain) {
 
     return { summary, trend, suppliers, products, suppliersForFilter, productsForFilter, selectedProductId: historyProductId || null, priceHistory, from, to }
   })
+  ipcMain.handle('reports:getCustomerReport', (_e, from: string, to: string, filters?: { customerId?: number }) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+      throw new Error('Rango de fechas inválido para el reporte de clientes.')
+    }
+
+    const db = getDb()
+    const customerId = Number(filters?.customerId) > 0 ? Number(filters?.customerId) : null
+    const whereParts = ['s.date BETWEEN ? AND ?', activeSalesCondition, 's.customer_id IS NOT NULL']
+    const params: any[] = [from, to]
+    if (customerId) { whereParts.push('s.customer_id=?'); params.push(customerId) }
+    const where = whereParts.join(' AND ')
+    const baseJoin = 'FROM sales s LEFT JOIN customers c ON c.id=s.customer_id '
+
+    const summary = queryFirst(db,
+      'SELECT COUNT(DISTINCT s.customer_id) as customer_count, COUNT(*) as sale_count, COALESCE(SUM(s.total), 0) as total_revenue, COALESCE(AVG(s.total), 0) as average_ticket ' +
+      baseJoin + 'WHERE ' + where,
+      params
+    ) || { customer_count: 0, sale_count: 0, total_revenue: 0, average_ticket: 0 }
+
+    const customers = queryAll(db,
+      "SELECT s.customer_id, COALESCE(c.name, MAX(s.customer_name), 'Cliente') as customer_name, COALESCE(c.nit, MAX(s.customer_nit)) as customer_nit, " +
+      'COUNT(*) as sale_count, COUNT(DISTINCT s.date) as active_days, COALESCE(SUM(s.total), 0) as total_spent, COALESCE(AVG(s.total), 0) as average_ticket, MIN(s.date) as first_sale_date, MAX(s.date) as last_sale_date ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY s.customer_id ORDER BY total_spent DESC, sale_count DESC, customer_name ASC',
+      params
+    )
+
+    const customersForFilter = queryAll(db,
+      "SELECT s.customer_id as id, COALESCE(c.name, MAX(s.customer_name), 'Cliente') as name, COALESCE(c.nit, MAX(s.customer_nit)) as nit " +
+      baseJoin + 'WHERE s.date BETWEEN ? AND ? AND ' + activeSalesCondition + ' AND s.customer_id IS NOT NULL GROUP BY s.customer_id ORDER BY name ASC',
+      [from, to]
+    )
+
+    const historyCustomerId = customerId || Number(customers[0]?.customer_id || 0)
+    let sales: any[] = []
+    if (historyCustomerId) {
+      sales = queryAll(db,
+        'SELECT s.id, s.folio, s.date, s.created_at, s.payment_method, s.total, s.discount, s.amount_paid, ' +
+        'COUNT(si.id) as item_count, COALESCE(SUM(si.quantity), 0) as units ' +
+        'FROM sales s LEFT JOIN sale_items si ON si.sale_id=s.id ' +
+        'WHERE s.customer_id=? AND s.date BETWEEN ? AND ? AND ' + activeSalesCondition +
+        ' GROUP BY s.id ORDER BY s.date DESC, datetime(s.created_at) DESC',
+        [historyCustomerId, from, to]
+      )
+    }
+
+    return { summary, customers, customersForFilter, selectedCustomerId: historyCustomerId || null, sales, from, to }
+  })
   ipcMain.handle('reports:getSalesPerformance', (_e, from: string, to: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
     const db = getDb()
     const start = new Date(from + 'T00:00:00Z')
