@@ -244,6 +244,64 @@ export function registerReportHandlers(ipcMain: IpcMain) {
 
     return { summary, customers, customersForFilter, selectedCustomerId: historyCustomerId || null, sales, from, to }
   })
+  ipcMain.handle('reports:getProfitabilityReport', (_e, from: string, to: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+      throw new Error('Rango de fechas inválido para el reporte de rentabilidad.')
+    }
+
+    const db = getDb()
+    const where = "s.date BETWEEN ? AND ? AND " + activeSalesCondition + " AND si.item_type='product'"
+    const params = [from, to]
+    const netRevenue = '(si.subtotal * CASE WHEN s.subtotal > 0 THEN s.total / s.subtotal ELSE 1 END)'
+    const knownCost = 'si.unit_cost IS NOT NULL'
+    const lineCost = '(si.quantity * si.unit_cost)'
+    const baseJoin = 'FROM sale_items si JOIN sales s ON s.id=si.sale_id LEFT JOIN products p ON p.id=si.product_id LEFT JOIN categories c ON c.id=p.category_id '
+
+    const summary = queryFirst(db,
+      'SELECT COALESCE(SUM(' + netRevenue + '), 0) as total_product_revenue, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue_with_cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + lineCost + ' ELSE 0 END), 0) as total_cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' - ' + lineCost + ' ELSE 0 END), 0) as gross_profit, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue_without_cost, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN 1 ELSE 0 END), 0) as lines_without_cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN si.quantity ELSE 0 END), 0) as units_with_cost ' +
+      baseJoin + 'WHERE ' + where,
+      params
+    ) || { total_product_revenue: 0, revenue_with_cost: 0, total_cost: 0, gross_profit: 0, revenue_without_cost: 0, lines_without_cost: 0, units_with_cost: 0 }
+
+    const trend = queryAll(db,
+      'SELECT s.date, COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + lineCost + ' ELSE 0 END), 0) as cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' - ' + lineCost + ' ELSE 0 END), 0) as profit, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue_without_cost ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY s.date ORDER BY s.date ASC',
+      params
+    )
+
+    const products = queryAll(db,
+      "SELECT COALESCE(p.name, si.description) as name, p.sku, COALESCE(c.name, 'Sin categoría') as category_name, si.product_id, " +
+      'COALESCE(SUM(si.quantity), 0) as units, COALESCE(SUM(' + netRevenue + '), 0) as total_revenue, COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + lineCost + ' ELSE 0 END), 0) as cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' - ' + lineCost + ' ELSE 0 END), 0) as profit, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue_without_cost, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN 1 ELSE 0 END), 0) as lines_without_cost ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY si.product_id, si.description, p.name, p.sku, c.name ORDER BY profit DESC, revenue DESC, units DESC',
+      params
+    )
+
+    const categories = queryAll(db,
+      "SELECT COALESCE(c.name, 'Sin categoría') as name, COALESCE(SUM(si.quantity), 0) as units, " +
+      'COALESCE(SUM(' + netRevenue + '), 0) as total_revenue, COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + lineCost + ' ELSE 0 END), 0) as cost, ' +
+      'COALESCE(SUM(CASE WHEN ' + knownCost + ' THEN ' + netRevenue + ' - ' + lineCost + ' ELSE 0 END), 0) as profit, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN ' + netRevenue + ' ELSE 0 END), 0) as revenue_without_cost, ' +
+      'COALESCE(SUM(CASE WHEN NOT (' + knownCost + ') THEN 1 ELSE 0 END), 0) as lines_without_cost ' +
+      baseJoin + 'WHERE ' + where + ' GROUP BY c.id, c.name ORDER BY profit DESC, revenue DESC, units DESC',
+      params
+    )
+
+    return { summary, trend, products, categories, from, to }
+  })
   ipcMain.handle('reports:getSalesPerformance', (_e, from: string, to: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
     const db = getDb()
     const start = new Date(from + 'T00:00:00Z')

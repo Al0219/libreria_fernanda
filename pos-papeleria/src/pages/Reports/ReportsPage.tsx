@@ -199,6 +199,47 @@ interface CustomerReport {
   to: string
 }
 
+interface ProfitabilitySummary {
+  total_product_revenue: number
+  revenue_with_cost: number
+  total_cost: number
+  gross_profit: number
+  revenue_without_cost: number
+  lines_without_cost: number
+  units_with_cost: number
+}
+
+interface ProfitabilityTrend {
+  date: string
+  revenue: number
+  cost: number
+  profit: number
+  revenue_without_cost: number
+}
+
+interface ProfitabilityRow {
+  name: string
+  sku?: string | null
+  category_name?: string
+  product_id?: number
+  units: number
+  total_revenue: number
+  revenue: number
+  cost: number
+  profit: number
+  revenue_without_cost: number
+  lines_without_cost: number
+}
+
+interface ProfitabilityReport {
+  summary: ProfitabilitySummary
+  trend: ProfitabilityTrend[]
+  products: ProfitabilityRow[]
+  categories: ProfitabilityRow[]
+  from: string
+  to: string
+}
+
 type GroupBy = 'day' | 'week' | 'month'
 
 const formatMoney = (value: number) => 'Q' + Number(value || 0).toFixed(2)
@@ -343,6 +384,16 @@ function CustomerRankingTable({ items, from, to }: { items: CustomerRank[]; from
   const periodDays = Math.max(1, Math.round((new Date(to + 'T00:00:00Z').getTime() - new Date(from + 'T00:00:00Z').getTime()) / 86400000) + 1)
   return <div className="card"><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><UsersRound size={16} style={{ color: '#8b5cf6' }} />Clientes con más compras</h3><p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>Ordenados por monto acumulado en el período.</p>{items.length === 0 ? <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>No hay ventas activas con cliente en este período.</div> : <div className="table-container"><table><thead><tr><th>#</th><th>Cliente</th><th style={{ textAlign: 'right' }}>Compras</th><th>Frecuencia</th><th style={{ textAlign: 'right' }}>Monto acumulado</th></tr></thead><tbody>{items.map((item, index) => { const every = Math.max(1, Math.round(periodDays / Number(item.sale_count || 1))); return <tr key={item.customer_id}><td style={{ color: 'var(--text-muted)', fontWeight: 700 }}>{index + 1}</td><td><div style={{ fontWeight: 600 }}>{item.customer_name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.customer_nit ? 'NIT: ' + item.customer_nit : 'Sin NIT'} · Ticket prom. {formatMoney(Number(item.average_ticket || 0))}</div></td><td style={{ textAlign: 'right', fontWeight: 700 }}>{Number(item.sale_count || 0)}</td><td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{Number(item.sale_count) === 1 ? 'Una compra' : 'Cada ~' + every + ' día(s)'}<div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{Number(item.active_days || 0)} día(s) con compra</div></td><td style={{ textAlign: 'right', color: '#8b5cf6', fontWeight: 800 }}>{formatMoney(Number(item.total_spent || 0))}</td></tr> })}</tbody></table></div>}</div>
 }
+function ProfitabilityTable({ title, subtitle, icon: Icon, rows, accent, productRows = false }: {
+  title: string
+  subtitle: string
+  icon: any
+  rows: ProfitabilityRow[]
+  accent: string
+  productRows?: boolean
+}) {
+  return <div className="card"><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><Icon size={16} style={{ color: accent }} />{title}</h3><p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>{subtitle}</p>{rows.length === 0 ? <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>No hay productos vendidos con estos datos.</div> : <div className="table-container"><table><thead><tr><th>{productRows ? 'Producto' : 'Categoría'}</th><th style={{ textAlign: 'right' }}>Venta neta</th><th style={{ textAlign: 'right' }}>Costo</th><th style={{ textAlign: 'right' }}>Utilidad</th><th style={{ textAlign: 'right' }}>Margen</th></tr></thead><tbody>{rows.map((row, index) => { const revenueWithCost = Number(row.revenue || 0); const profit = Number(row.profit || 0); const margin = revenueWithCost > 0 ? (profit / revenueWithCost) * 100 : null; return <tr key={(row.product_id || row.name) + '-' + index}><td><div style={{ fontWeight: 600 }}>{row.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{productRows ? ((row.sku || 'Sin código') + (row.category_name ? ' · ' + row.category_name : '')) : Number(row.units || 0) + ' unidad(es)'}</div>{Number(row.revenue_without_cost || 0) > 0 && <div style={{ fontSize: 11, color: 'var(--accent-warning)', marginTop: 3 }}>Costo pendiente: {formatMoney(Number(row.revenue_without_cost))}</div>}</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{formatMoney(Number(row.total_revenue || 0))}</td><td style={{ textAlign: 'right' }}>{formatMoney(Number(row.cost || 0))}</td><td style={{ textAlign: 'right', color: profit >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)', fontWeight: 800 }}>{formatMoney(profit)}</td><td style={{ textAlign: 'right', fontWeight: 700, color: margin == null ? 'var(--text-muted)' : margin >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)' }}>{margin == null ? '—' : margin.toFixed(1) + '%'}</td></tr> })}</tbody></table></div>}</div>
+}
 export default function ReportsPage() {
   const today = getBusinessDate()
   const [from, setFrom] = useState(today)
@@ -353,6 +404,7 @@ export default function ReportsPage() {
   const [inventory, setInventory] = useState<InventoryStatus | null>(null)
   const [purchases, setPurchases] = useState<PurchasesReport | null>(null)
   const [customerReport, setCustomerReport] = useState<CustomerReport | null>(null)
+  const [profitability, setProfitability] = useState<ProfitabilityReport | null>(null)
   const [reportCustomerId, setReportCustomerId] = useState<number | ''>('')
   const [purchaseSupplierId, setPurchaseSupplierId] = useState<number | ''>('')
   const [purchaseProductId, setPurchaseProductId] = useState<number | ''>('')
@@ -376,14 +428,16 @@ export default function ReportsPage() {
       api.reports.getInventoryStatus(from, to),
       api.reports.getPurchasesReport(from, to, { supplierId: purchaseSupplierId || undefined, productId: purchaseProductId || undefined }),
       api.reports.getCustomerReport(from, to, { customerId: reportCustomerId || undefined }),
+      api.reports.getProfitabilityReport(from, to),
     ])
-      .then(([operational, salesPerformance, inventoryStatus, purchasesReport, customersReport]: any[]) => {
+      .then(([operational, salesPerformance, inventoryStatus, purchasesReport, customersReport, profitabilityReport]: any[]) => {
         if (!active) return
         setReport(operational as OperationalReport)
         setPerformance(salesPerformance as SalesPerformance)
         setInventory(inventoryStatus as InventoryStatus)
         setPurchases(purchasesReport as PurchasesReport)
         setCustomerReport(customersReport as CustomerReport)
+        setProfitability(profitabilityReport as ProfitabilityReport)
       })
       .catch(() => {
         if (active) setError('No se pudo cargar el reporte. Intenta nuevamente.')
@@ -427,6 +481,9 @@ export default function ReportsPage() {
   const priceHistoryProduct = purchases?.products.find(product => Number(product.product_id) === Number(purchases?.selectedProductId))
   const selectedCustomer = customerReport?.customers.find(customer => Number(customer.customer_id) === Number(customerReport?.selectedCustomerId))
   const paymentLabels: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', credit: 'Crédito' }
+  const profitabilityTrendData = useMemo(() => (profitability?.trend || []).map(row => ({ name: formatChartDate(row.date), revenue: Number(row.revenue), cost: Number(row.cost), profit: Number(row.profit), missing: Number(row.revenue_without_cost) })), [profitability])
+  const grossMargin = Number(profitability?.summary.revenue_with_cost || 0) > 0 ? (Number(profitability?.summary.gross_profit || 0) / Number(profitability?.summary.revenue_with_cost || 0)) * 100 : null
+  const costCoverage = Number(profitability?.summary.total_product_revenue || 0) > 0 ? (Number(profitability?.summary.revenue_with_cost || 0) / Number(profitability?.summary.total_product_revenue || 0)) * 100 : null
 
   const paymentRows = [
     { label: 'Efectivo', value: summary?.cash_total || 0, count: summary?.cash_count || 0, icon: Banknote, color: '#f59e0b' },
@@ -444,7 +501,7 @@ export default function ReportsPage() {
     setTo(today)
   }
 
-  if (loading && (!report || !performance || !inventory || !purchases || !customerReport)) {
+  if (loading && (!report || !performance || !inventory || !purchases || !customerReport || !profitability)) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando reportes...</div>
   }
 
@@ -612,6 +669,29 @@ export default function ReportsPage() {
             <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}><ReceiptText size={16} style={{ color: 'var(--accent-primary)' }} />Historial detallado{selectedCustomer ? ': ' + selectedCustomer.customer_name : ''}</h3>
             <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>{selectedCustomer ? 'Ventas activas de ' + selectedCustomer.customer_name + ' dentro del período seleccionado.' : 'Selecciona un cliente con compras en este período.'}</p>
             {(customerReport?.sales || []).length === 0 ? <div style={{ textAlign: 'center', padding: 30, color: 'var(--text-muted)', fontSize: 13 }}>No hay ventas activas para este cliente.</div> : <div className="table-container"><table><thead><tr><th>Fecha / folio</th><th>Pago</th><th style={{ textAlign: 'right' }}>Artículos</th><th style={{ textAlign: 'right' }}>Descuento</th><th style={{ textAlign: 'right' }}>Total</th></tr></thead><tbody>{(customerReport?.sales || []).map(sale => <tr key={sale.id}><td><div style={{ fontWeight: 600 }}>{formatReportDate(sale.date)}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Folio {sale.folio}</div></td><td><span className="badge">{paymentLabels[sale.payment_method] || sale.payment_method}</span></td><td style={{ textAlign: 'right' }}>{Number(sale.item_count || 0)} línea(s)<div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{Number(sale.units || 0)} unid.</div></td><td style={{ textAlign: 'right', color: Number(sale.discount || 0) > 0 ? 'var(--accent-danger)' : 'var(--text-muted)' }}>{Number(sale.discount || 0) > 0 ? formatMoney(Number(sale.discount)) : '—'}</td><td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--accent-success)' }}>{formatMoney(Number(sale.total || 0))}</td></tr>)}</tbody></table></div>}
+          </div>
+
+          <div style={{ margin: '30px 0 12px' }}>
+            <h2 style={{ fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><TrendingUp size={20} style={{ color: 'var(--accent-primary)' }} />Rentabilidad y margen bruto</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '5px 0 0' }}>Productos físicos vendidos en el período. La venta neta distribuye proporcionalmente los descuentos globales de cada venta.</p>
+          </div>
+
+          {Number(profitability?.summary.revenue_without_cost || 0) > 0 && <div style={{ marginBottom: 16, display: 'flex', gap: 10, alignItems: 'center', padding: '11px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(245,158,11,0.1)', border: '1px solid var(--accent-warning)', color: 'var(--text-secondary)' }}><AlertTriangle size={18} style={{ color: 'var(--accent-warning)', flexShrink: 0 }} /><span><strong>{formatMoney(Number(profitability?.summary.revenue_without_cost || 0))}</strong> de ventas de productos no tiene costo histórico en {Number(profitability?.summary.lines_without_cost || 0)} línea(s); se muestra en ventas, pero se excluye de costo, utilidad y margen.</span></div>}
+
+          <div className="grid-cols-4" style={{ marginBottom: 16 }}>
+            {[
+              { label: 'Venta neta de productos', value: formatMoney(Number(profitability?.summary.total_product_revenue || 0)), icon: TrendingUp, color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+              { label: 'Costo histórico cubierto', value: formatMoney(Number(profitability?.summary.total_cost || 0)), icon: CircleDollarSign, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+              { label: 'Utilidad bruta', value: formatMoney(Number(profitability?.summary.gross_profit || 0)), icon: CircleDollarSign, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+              { label: 'Margen bruto', value: grossMargin == null ? '—' : grossMargin.toFixed(1) + '%', icon: BadgePercent, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
+            ].map(({ label, value, icon: Icon, color, bg }) => <div key={label} className="stat-card"><div className="stat-icon" style={{ background: bg }}><Icon size={20} style={{ color }} /></div><div><div className="stat-label">{label}</div><div className="stat-value" style={{ color }}>{value}</div></div></div>)}
+          </div>
+
+          <div className="card" style={{ marginBottom: 16 }}><h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 7 }}><TrendingUp size={16} style={{ color: 'var(--accent-success)' }} />Utilidad bruta por día</h3><p style={{ margin: '0 0 16px', fontSize: 12, color: 'var(--text-muted)' }}>Calculada solo sobre la cobertura de ventas con costo histórico{costCoverage == null ? '' : ' (' + costCoverage.toFixed(1) + '% de venta neta)'}.</p>{profitabilityTrendData.length === 0 ? <div style={{ textAlign: 'center', padding: 36, color: 'var(--text-muted)', fontSize: 13 }}>No hay productos vendidos en este período.</div> : <ResponsiveContainer width="100%" height={240}><BarChart data={profitabilityTrendData} margin={{ top: 4, right: 0, left: -12, bottom: 0 }}><XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} /><YAxis tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} /><Tooltip contentStyle={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, fontSize: 13 }} formatter={(value: any, _name: string, item: any) => [formatMoney(Number(value)), 'Venta: ' + formatMoney(Number(item.payload.revenue)) + ' · Costo: ' + formatMoney(Number(item.payload.cost)) + (Number(item.payload.missing) > 0 ? ' · Sin costo: ' + formatMoney(Number(item.payload.missing)) : '')]} /><Bar dataKey="profit" radius={[6, 6, 0, 0]} fill="#10b981" /></BarChart></ResponsiveContainer>}</div>
+
+          <div className="grid-cols-2">
+            <ProfitabilityTable title="Rentabilidad por producto" subtitle="Venta neta, costo histórico, utilidad y margen por producto" icon={Package} rows={profitability?.products || []} accent="#3b82f6" productRows />
+            <ProfitabilityTable title="Rentabilidad por categoría" subtitle="Resultado agregado por categoría de inventario" icon={Layers3} rows={profitability?.categories || []} accent="#8b5cf6" />
           </div>
         </>
       )}

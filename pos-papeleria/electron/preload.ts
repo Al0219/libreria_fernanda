@@ -62,6 +62,7 @@ const api = {
     getInventoryStatus: (from: string, to: string) => ipcRenderer.invoke('reports:getInventoryStatus', from, to),
     getPurchasesReport: (from: string, to: string, filters?: { supplierId?: number; productId?: number }) => ipcRenderer.invoke('reports:getPurchasesReport', from, to, filters),
     getCustomerReport: (from: string, to: string, filters?: { customerId?: number }) => ipcRenderer.invoke('reports:getCustomerReport', from, to, filters),
+    getProfitabilityReport: (from: string, to: string) => ipcRenderer.invoke('reports:getProfitabilityReport', from, to),
   },
   // Cuentas por cobrar
   credits: {

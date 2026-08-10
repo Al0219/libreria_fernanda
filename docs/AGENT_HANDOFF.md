@@ -167,11 +167,20 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Consistencia:** Solo se consideran ventas activas con `customer_id`; ventas canceladas y ventas de mostrador no alteran totales, ranking ni historial.
 - **Verificado:** prueba SQLite con dos clientes, venta cancelada y venta sin cliente; `npx tsc --noEmit` y `npx vite build` correctos.
 
+## Actualización 2026-08-09: reportes fase 6 — rentabilidad y margen bruto
+
+- **Base histórica:** Rentabilidad usa `sale_items.unit_cost`, guardado al momento de cada venta, y nunca sustituye ese costo por el costo actual del producto.
+- **Venta neta y utilidad:** Los descuentos globales se distribuyen proporcionalmente entre líneas de producto. Reportes calcula venta neta, costo, utilidad bruta y margen por período, producto y categoría; servicios no se mezclan en este análisis de inventario.
+- **Cobertura explícita:** Las líneas de ventas anteriores que no tienen costo histórico se muestran como venta sin costo y quedan excluidas de costo, utilidad y margen. Así no se presenta una rentabilidad inventada; el panel informa monto, líneas y porcentaje cubierto.
+- **Consistencia:** Ventas canceladas se excluyen de totales, gráfica diaria y todos los desgloses.
+- **Verificado:** prueba SQLite con descuento global, costos históricos, venta cancelada y costo faltante; `npx tsc --noEmit` y `npx vite build` correctos.
+
 ## Pendiente inmediato
 
-1. Prueba manual: seleccionar un cliente con varias compras y comprobar su frecuencia, total e historial al cambiar el rango de Reportes.
-2. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
-3. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
-4. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
-5. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
-6. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+1. Prueba manual: registrar una venta de producto con descuento y verificar venta neta, costo, utilidad y margen en Reportes.
+2. Prueba manual: seleccionar un cliente con varias compras y comprobar su frecuencia, total e historial al cambiar el rango de Reportes.
+3. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
+4. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
+5. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+6. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+7. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
