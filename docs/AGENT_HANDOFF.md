@@ -215,3 +215,8 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - Se generó y verificó `pos-papeleria/release/win-unpacked/POS Papelería.exe` con sus recursos actualizados a las 20:59. Es apto para copiar íntegramente a otra laptop Windows 11.
 - `app.asar` de la carpeta portable fue generado en la misma ejecución (SHA-256: `4777514F23A487E40CB465DCB9A1BFC515BD544D3D87DE7E4D17B0A2B111E42F`).
 - El instalador/paquete electron-builder sigue bloqueado solo al extraer `winCodeSign` por el privilegio de Windows para crear enlaces simbólicos. No afecta la carpeta portable.
+## 2026-08-09 — Developer Tools en produccion
+
+- Se retiraron las llamadas que abrían Developer Tools automáticamente, tanto al iniciar como al usar el servidor de desarrollo.
+- Verificado: `npx tsc --noEmit`, `npx vite build` y paquete portable regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.
+- La carpeta `release/win-unpacked` actualizada es la que debe copiarse a la laptop destino.

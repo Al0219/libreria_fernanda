@@ -47,7 +47,6 @@ function createWindow() {
     backgroundColor: '#ffffff',
   })
 
-  win.webContents.openDevTools()
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
@@ -56,7 +55,6 @@ function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools({ mode: 'detach' })
   } else {
     win.loadFile(path.join(process.env.DIST!, 'index.html'))
   }
