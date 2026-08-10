@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../../lib/api'
-import { Settings, Save, Printer, Tag, Plus, Edit2, Trash2, Check, X, FolderOpen, DatabaseBackup } from 'lucide-react'
+import { applyTheme, normalizeTheme } from '../../lib/theme'
+import { Settings, Save, Printer, Tag, Plus, Edit2, Trash2, Check, X, FolderOpen, DatabaseBackup, Palette } from 'lucide-react'
 
 interface PrintPrice {
   id: number
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const [savedPrices, setSavedPrices] = useState(false)
   const [savingStorage, setSavingStorage] = useState(false)
   const [storageMessage, setStorageMessage] = useState('')
+  const [themeSaved, setThemeSaved] = useState(false)
 
   // Estado para nueva categoría
   const [newCatName, setNewCatName] = useState('')
@@ -58,6 +60,18 @@ export default function SettingsPage() {
   }
 
 
+
+  const updateTheme = (value: string) => {
+    const theme = normalizeTheme(value)
+    setField('ui_theme', theme)
+    applyTheme(theme)
+  }
+
+  const saveTheme = async () => {
+    await api.config.set('ui_theme', normalizeTheme(config.ui_theme))
+    setThemeSaved(true)
+    setTimeout(() => setThemeSaved(false), 2000)
+  }
   const chooseDirectory = async (field: 'backup_directory' | 'documents_directory') => {
     const selected = await api.config.chooseDirectory(config[field] || '')
     if (selected) setField(field, selected)
@@ -178,6 +192,12 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        <div className="card">
+          <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}><Palette size={16} style={{ color: 'var(--accent-primary)' }} /> Tema y visibilidad</h3>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>Alto contraste usa azul, verde y bordes mas separados para pantallas con colores limitados.</p>
+          <div className="form-group"><label className="form-label">Tema visual</label><select className="select" value={normalizeTheme(config.ui_theme)} onChange={e => updateTheme(e.target.value)}><option value="standard">Estandar</option><option value="high-contrast">Alto contraste</option></select></div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button className="btn btn-primary" onClick={saveTheme}><Save size={15} /> {themeSaved ? 'Guardado' : 'Guardar tema'}</button></div>
+        </div>
         <div className="card">
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}><DatabaseBackup size={16} style={{ color: 'var(--accent-success)' }} /> Almacenamiento y respaldos</h3>
           <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>La base activa permanece en el SSD. Selecciona una carpeta del HDD para copias y otra para tickets, PDF, CSV y reportes.</p>

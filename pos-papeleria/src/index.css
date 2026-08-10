@@ -12,6 +12,7 @@
   --bg-surface:  #FFFFFF;   /* blanco puro — cards y paneles */
   --bg-elevated: #D4EFFF;   /* celeste suave — elementos elevados */
   --bg-hover:    #BFDFFF;   /* celeste medio — hover */
+  --sidebar-bg:  #D4EFFF;
 
   /* Acento principal — azul clásico */
   --accent-primary:       #3B82C4;
@@ -42,6 +43,33 @@
   --shadow-md: 0 4px 16px rgba(59,130,196,0.12);
   --shadow-lg: 0 8px 32px rgba(59,130,196,0.15);
 }
+:root[data-theme='high-contrast'] {
+  --bg-base: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #E5E7EB;
+  --bg-hover: #C7D2FE;
+  --sidebar-bg: #E0E7FF;
+  --accent-primary: #1D4ED8;
+  --accent-primary-hover: #1E40AF;
+  --accent-success: #15803D;
+  --accent-warning: #B45309;
+  --accent-danger: #B91C1C;
+  --accent-info: #075985;
+  --text-primary: #111827;
+  --text-secondary: #1F2937;
+  --text-muted: #475569;
+  --border: #64748B;
+  --border-subtle: #94A3B8;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, .18);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, .22);
+  --shadow-lg: 0 8px 32px rgba(15, 23, 42, .28);
+}
+
+:root[data-theme='high-contrast'] .btn,
+:root[data-theme='high-contrast'] .input,
+:root[data-theme='high-contrast'] .select,
+:root[data-theme='high-contrast'] .textarea { border-width: 2px; }
+:root[data-theme='high-contrast'] .nav-item.active { font-weight: 700; }
 
 /* ─── Reset & Base ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,7 +104,7 @@ body {
 .sidebar {
   width: 220px;
   min-width: 220px;
-  background: #D4EFFF;   /* celeste sidebar */
+  background: var(--sidebar-bg);   /* celeste sidebar */
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;

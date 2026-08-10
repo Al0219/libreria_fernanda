@@ -220,3 +220,9 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - Se retiraron las llamadas que abrían Developer Tools automáticamente, tanto al iniciar como al usar el servidor de desarrollo.
 - Verificado: `npx tsc --noEmit`, `npx vite build` y paquete portable regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.
 - La carpeta `release/win-unpacked` actualizada es la que debe copiarse a la laptop destino.
+## 2026-08-09 — Temas estandar y alto contraste
+
+- Configuracion incorpora el selector persistente `Estandar` / `Alto contraste`.
+- Alto contraste usa fondos neutros, bordes mas marcados y separa azul, verde, alertas y textos para paneles con baja fidelidad de color; el cambio se aplica de inmediato y se conserva al reiniciar.
+- Verificado: `npx tsc --noEmit`, `npx vite build` y `git diff --check` correctos.
+- Pendiente manual: seleccionar Alto contraste en la HP 250 G7 y confirmar que azul y verde se distinguen adecuadamente.

@@ -363,6 +363,7 @@ function seedInitialData() {
       ['business_phone', '000-000-0000'],
       ['business_email', ''],
       ['ticket_footer', 'Gracias por su compra'],
+      ['ui_theme', 'standard'],
       ['backup_directory', ''],
       ['documents_directory', ''],
       ['auto_backup_on_close', 'true'],
