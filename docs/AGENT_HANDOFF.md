@@ -122,6 +122,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Reapertura:** Un corte ya cerrado puede reabrirse únicamente en la fecha comercial actual. Se limpian el contado, esperado, diferencia y nota de ese cierre para que se recalculen al guardar el nuevo corte.
 - **Gastos:** Cada gasto de la caja actual abierta ahora tiene botón de eliminación con confirmación. El proceso principal valida además el identificador, la fecha comercial, la pertenencia a la caja actual y que siga abierta; no permite eliminar gastos de días anteriores ni de cajas cerradas.
 - **Verificado:** `npx tsc --noEmit`, `npx vite build` y prueba SQLite de reapertura, eliminación del gasto actual y bloqueo fuera del período correctas.
+## Actualización 2026-08-09: reportes fase 2 — detalle y rendimiento de ventas
+
+- **Agrupación:** Reportes permite ver el rendimiento del período por día, semana o mes, usando las mismas fechas comerciales seleccionadas.
+- **Comparativo:** Muestra ingresos y cantidad de ventas contra el período anterior de igual duración, con variación porcentual y las fechas comparadas.
+- **Rankings:** Incluye los 10 productos, categorías y servicios más vendidos, con cantidad y ventas brutas. Los importes de rankings se identifican como brutos porque el descuento se guarda a nivel de venta, no de línea.
+- **Consistencia:** Series, comparativo y rankings excluyen ventas canceladas.
+- **Verificado:** `npx tsc --noEmit`, `npx vite build`, pruebas SQLite de series, comparativo, rankings con venta cancelada y agrupación semanal/mensual correctas.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

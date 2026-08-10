@@ -83,4 +83,74 @@ export function registerReportHandlers(ipcMain: IpcMain) {
       'WHERE p.active=1 AND p.stock <= p.min_stock ORDER BY (p.stock - p.min_stock) ASC'
     )
   })
+  ipcMain.handle('reports:getSalesPerformance', (_e, from: string, to: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
+    const db = getDb()
+    const start = new Date(from + 'T00:00:00Z')
+    const end = new Date(to + 'T00:00:00Z')
+    const days = Math.round((end.getTime() - start.getTime()) / 86400000) + 1
+    const previousToDate = new Date(start)
+    previousToDate.setUTCDate(previousToDate.getUTCDate() - 1)
+    const previousFromDate = new Date(previousToDate)
+    previousFromDate.setUTCDate(previousFromDate.getUTCDate() - Math.max(days - 1, 0))
+    const previousFrom = previousFromDate.toISOString().slice(0, 10)
+    const previousTo = previousToDate.toISOString().slice(0, 10)
+
+    const summaryFor = (startDate: string, endDate: string) => queryFirst(db,
+      'SELECT COUNT(*) as total_sales, COALESCE(SUM(total), 0) as total_revenue FROM sales WHERE date BETWEEN ? AND ? AND ' + activeSalesCondition,
+      [startDate, endDate]
+    ) || { total_sales: 0, total_revenue: 0 }
+
+    const periodExpression = groupBy === 'month'
+      ? "substr(date, 1, 7)"
+      : groupBy === 'week'
+        ? "strftime('%Y-W%W', date)"
+        : 'date'
+
+    const trend = queryAll(db,
+      'SELECT ' + periodExpression + ' as period, MIN(date) as period_start, COUNT(*) as count, COALESCE(SUM(total), 0) as total ' +
+      'FROM sales WHERE date BETWEEN ? AND ? AND ' + activeSalesCondition + ' ' +
+      'GROUP BY period ORDER BY period_start ASC',
+      [from, to]
+    )
+
+    const products = queryAll(db,
+      "SELECT COALESCE(p.name, si.description) as name, COALESCE(c.name, 'Sin categoría') as category_name, " +
+      'COALESCE(SUM(si.quantity), 0) as quantity, COALESCE(SUM(si.subtotal), 0) as total, COUNT(DISTINCT s.id) as sale_count ' +
+      'FROM sale_items si JOIN sales s ON s.id=si.sale_id ' +
+      'LEFT JOIN products p ON p.id=si.product_id LEFT JOIN categories c ON c.id=p.category_id ' +
+      "WHERE si.item_type='product' AND s.date BETWEEN ? AND ? AND (s.cancelled IS NULL OR s.cancelled=0) " +
+      'GROUP BY si.product_id, si.description, c.name ORDER BY total DESC, quantity DESC LIMIT 10',
+      [from, to]
+    )
+
+    const categories = queryAll(db,
+      "SELECT COALESCE(c.name, 'Sin categoría') as name, COALESCE(SUM(si.quantity), 0) as quantity, " +
+      'COALESCE(SUM(si.subtotal), 0) as total, COUNT(DISTINCT s.id) as sale_count ' +
+      'FROM sale_items si JOIN sales s ON s.id=si.sale_id ' +
+      'LEFT JOIN products p ON p.id=si.product_id LEFT JOIN categories c ON c.id=p.category_id ' +
+      "WHERE si.item_type='product' AND s.date BETWEEN ? AND ? AND (s.cancelled IS NULL OR s.cancelled=0) " +
+      'GROUP BY c.id, c.name ORDER BY total DESC, quantity DESC LIMIT 10',
+      [from, to]
+    )
+
+    const services = queryAll(db,
+      'SELECT si.description as name, si.item_type, COALESCE(SUM(si.quantity), 0) as quantity, ' +
+      'COALESCE(SUM(si.subtotal), 0) as total, COUNT(DISTINCT s.id) as sale_count ' +
+      'FROM sale_items si JOIN sales s ON s.id=si.sale_id ' +
+      "WHERE si.item_type <> 'product' AND s.date BETWEEN ? AND ? AND (s.cancelled IS NULL OR s.cancelled=0) " +
+      'GROUP BY si.item_type, si.description ORDER BY total DESC, quantity DESC LIMIT 10',
+      [from, to]
+    )
+
+    return {
+      current: summaryFor(from, to),
+      previous: summaryFor(previousFrom, previousTo),
+      previousFrom,
+      previousTo,
+      trend,
+      products,
+      categories,
+      services,
+    }
+  })
 }
