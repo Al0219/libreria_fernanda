@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { pdf } from '@react-pdf/renderer'
 import { api } from '../../lib/api'
+import { ReportDocument, type ReportExportData } from './ReportDocument'
 import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
-import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, CircleDollarSign, Clock3, CreditCard, Landmark, Layers3, Package, PackageSearch, PackageX, ReceiptText, ShoppingBag, TrendingUp, Truck, UserRoundCheck, UsersRound, Wrench } from 'lucide-react'
+import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, CircleDollarSign, Clock3, CreditCard, FileDown, FileText, Landmark, Layers3, Package, PackageSearch, PackageX, Printer, ReceiptText, ShoppingBag, TrendingUp, Truck, UserRoundCheck, UsersRound, Wrench } from 'lucide-react'
 import { Bar, BarChart, Cell, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Summary {
@@ -409,6 +411,8 @@ export default function ReportsPage() {
   const [purchaseSupplierId, setPurchaseSupplierId] = useState<number | ''>('')
   const [purchaseProductId, setPurchaseProductId] = useState<number | ''>('')
   const [loading, setLoading] = useState(true)
+  const [exporting, setExporting] = useState<'csv' | 'pdf' | ''>('')
+  const [exportError, setExportError] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -501,6 +505,48 @@ export default function ReportsPage() {
     setTo(today)
   }
 
+  const buildExportData = async (): Promise<ReportExportData> => {
+    const config = await api.config.getAll() as Record<string, string>
+    return {
+      businessName: config.business_name || 'Papelería', periodLabel: rangeLabel, generatedAt: new Date().toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' }),
+      sales: { count: Number(summary?.total_sales || 0), revenue: Number(summary?.total_revenue || 0), cash: Number(summary?.cash_total || 0), discounts: Number(summary?.total_discounts || 0) },
+      inventory: { cost: Number(inventorySummary?.inventory_cost || 0), units: Number(inventorySummary?.units_in_stock || 0), lowStock: Number(inventorySummary?.low_stock_count || 0), outOfStock: Number(inventorySummary?.out_of_stock_count || 0) },
+      purchases: { invested: Number(purchases?.summary.total_invested || 0), count: Number(purchases?.summary.purchase_count || 0), units: Number(purchases?.summary.total_units || 0) },
+      customers: { count: Number(customerReport?.summary.customer_count || 0), sales: Number(customerReport?.summary.sale_count || 0), revenue: Number(customerReport?.summary.total_revenue || 0) },
+      profitability: { revenue: Number(profitability?.summary.total_product_revenue || 0), cost: Number(profitability?.summary.total_cost || 0), profit: Number(profitability?.summary.gross_profit || 0), margin: grossMargin, missingCostRevenue: Number(profitability?.summary.revenue_without_cost || 0) },
+      topProducts: (performance?.products || []).slice(0, 10).map(item => ({ name: item.name, quantity: Number(item.quantity || 0), total: Number(item.total || 0) })),
+      lowStockProducts: [...(inventory?.lowStock || []), ...(inventory?.outOfStock || [])].slice(0, 10).map(item => ({ name: item.name, stock: Number(item.stock || 0), minStock: Number(item.min_stock || 0) })),
+      topCustomers: (customerReport?.customers || []).slice(0, 10).map(item => ({ name: item.customer_name, sales: Number(item.sale_count || 0), total: Number(item.total_spent || 0) })),
+      profitableProducts: (profitability?.products || []).slice(0, 10).map(item => { const revenue = Number(item.revenue || 0); const profit = Number(item.profit || 0); return { name: item.name, revenue: Number(item.total_revenue || 0), cost: Number(item.cost || 0), profit, margin: revenue > 0 ? (profit / revenue) * 100 : null } }),
+    }
+  }
+
+  const csvCell = (value: string | number) => '"' + String(value ?? '').replace(/"/g, '""') + '"'
+  const buildCsv = () => {
+    const rows: (string | number)[][] = []
+    const section = (title: string, headers: string[], values: (string | number)[][]) => { rows.push([title]); rows.push(headers); rows.push(...values); rows.push([]) }
+    rows.push(['Corte de reportes', rangeLabel]); rows.push(['Generado', new Date().toLocaleString('es-GT')]); rows.push([])
+    section('Ventas', ['Indicador', 'Valor'], [['Ventas realizadas', Number(summary?.total_sales || 0)], ['Ingresos netos', Number(summary?.total_revenue || 0).toFixed(2)], ['Efectivo', Number(summary?.cash_total || 0).toFixed(2)], ['Descuentos', Number(summary?.total_discounts || 0).toFixed(2)]])
+    section('Inventario', ['Indicador', 'Valor'], [['Valor al costo', Number(inventorySummary?.inventory_cost || 0).toFixed(2)], ['Unidades disponibles', Number(inventorySummary?.units_in_stock || 0)], ['Bajo stock', Number(inventorySummary?.low_stock_count || 0)], ['Agotados', Number(inventorySummary?.out_of_stock_count || 0)]])
+    section('Compras', ['Indicador', 'Valor'], [['Costo invertido', Number(purchases?.summary.total_invested || 0).toFixed(2)], ['Compras registradas', Number(purchases?.summary.purchase_count || 0)], ['Unidades adquiridas', Number(purchases?.summary.total_units || 0)]])
+    section('Clientes', ['Indicador', 'Valor'], [['Clientes atendidos', Number(customerReport?.summary.customer_count || 0)], ['Ventas con cliente', Number(customerReport?.summary.sale_count || 0)], ['Monto acumulado', Number(customerReport?.summary.total_revenue || 0).toFixed(2)]])
+    section('Rentabilidad', ['Indicador', 'Valor'], [['Venta neta de productos', Number(profitability?.summary.total_product_revenue || 0).toFixed(2)], ['Costo histórico', Number(profitability?.summary.total_cost || 0).toFixed(2)], ['Utilidad bruta', Number(profitability?.summary.gross_profit || 0).toFixed(2)], ['Margen bruto', grossMargin == null ? '' : grossMargin.toFixed(2) + '%'], ['Venta sin costo histórico', Number(profitability?.summary.revenue_without_cost || 0).toFixed(2)]])
+    section('Productos más vendidos', ['Producto', 'Categoría', 'Unidades', 'Venta bruta'], (performance?.products || []).map(item => [item.name, item.category_name || '', Number(item.quantity || 0), Number(item.total || 0).toFixed(2)]))
+    section('Alertas de inventario', ['Producto', 'Stock', 'Mínimo', 'Estado'], [...(inventory?.lowStock || []).map(item => [item.name, Number(item.stock), Number(item.min_stock), 'Bajo stock']), ...(inventory?.outOfStock || []).map(item => [item.name, Number(item.stock), Number(item.min_stock), 'Agotado'])])
+    section('Clientes con más compras', ['Cliente', 'NIT', 'Compras', 'Monto acumulado'], (customerReport?.customers || []).map(item => [item.customer_name, item.customer_nit || '', Number(item.sale_count || 0), Number(item.total_spent || 0).toFixed(2)]))
+    section('Rentabilidad por producto', ['Producto', 'Categoría', 'Venta neta', 'Costo', 'Utilidad', 'Margen'], (profitability?.products || []).map(item => { const revenue = Number(item.revenue || 0); const profit = Number(item.profit || 0); return [item.name, item.category_name || '', Number(item.total_revenue || 0).toFixed(2), Number(item.cost || 0).toFixed(2), profit.toFixed(2), revenue > 0 ? ((profit / revenue) * 100).toFixed(2) + '%' : ''] }))
+    return '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n')
+  }
+
+  const handleExportCsv = async () => {
+    setExporting('csv'); setExportError('')
+    try { const result: any = await api.exports.saveAndOpen(new TextEncoder().encode(buildCsv()), `reportes-${from}-a-${to}.csv`); if (!result?.ok) throw new Error(result?.error || 'No se pudo guardar el CSV.') } catch (err: any) { setExportError(err?.message || 'No se pudo exportar el CSV.') } finally { setExporting('') }
+  }
+
+  const handleExportPdf = async (forPrint = false) => {
+    setExporting('pdf'); setExportError('')
+    try { const data = await buildExportData(); const blob = await pdf(<ReportDocument data={data} />).toBlob(); const result: any = await api.exports.saveAndOpen(new Uint8Array(await blob.arrayBuffer()), `${forPrint ? 'corte' : 'reportes'}-${from}-a-${to}.pdf`); if (!result?.ok) throw new Error(result?.error || 'No se pudo guardar el PDF.') } catch (err: any) { setExportError(err?.message || 'No se pudo generar el PDF.') } finally { setExporting('') }
+  }
   if (loading && (!report || !performance || !inventory || !purchases || !customerReport || !profitability)) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando reportes...</div>
   }
@@ -512,8 +558,13 @@ export default function ReportsPage() {
           <h1 className="page-title">Reportes</h1>
           <p className="page-subtitle">{rangeLabel}</p>
         </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button className="btn btn-ghost btn-sm" onClick={handleExportCsv} disabled={!!exporting}><FileDown size={15} /> {exporting === 'csv' ? 'Exportando...' : 'CSV'}</button>
+          <button className="btn btn-ghost btn-sm" onClick={() => handleExportPdf(false)} disabled={!!exporting}><FileText size={15} /> {exporting === 'pdf' ? 'Generando...' : 'PDF'}</button>
+          <button className="btn btn-primary btn-sm" onClick={() => handleExportPdf(true)} disabled={!!exporting}><Printer size={15} /> Imprimir corte</button>
+        </div>
       </div>
-
+      {exportError && <div style={{ marginBottom: 16, padding: '10px 12px', border: '1px solid var(--accent-danger)', borderRadius: 'var(--radius-md)', color: 'var(--accent-danger)' }}>{exportError}</div>}
       <div className="card" style={{ marginBottom: 16, padding: 14, display: 'flex', gap: 12, alignItems: 'flex-end', flexWrap: 'wrap' }}>
         <div className="form-group" style={{ margin: 0, minWidth: 150 }}>
           <label className="form-label">Desde</label>

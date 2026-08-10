@@ -175,12 +175,21 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Consistencia:** Ventas canceladas se excluyen de totales, gráfica diaria y todos los desgloses.
 - **Verificado:** prueba SQLite con descuento global, costos históricos, venta cancelada y costo faltante; `npx tsc --noEmit` y `npx vite build` correctos.
 
+## Actualización 2026-08-09: reportes fase 7 — salida, exportación y corte
+
+- **Rango común:** Las fechas Desde/Hasta existentes alimentan todas las fases de Reportes y ahora también determinan el corte exportado.
+- **CSV:** Se exporta un archivo compatible con hojas de cálculo, con secciones de ventas, inventario, compras, clientes, rentabilidad y sus listados operativos principales. Se guarda y abre desde la carpeta local de exportaciones de la aplicación.
+- **PDF e impresión:** El corte PDF resume los indicadores de todas las fases, productos, alertas, clientes y rentabilidad. El botón Imprimir corte genera el mismo PDF con nombre de corte y lo abre en el visor predeterminado del sistema, desde donde se elige impresora y opciones.
+- **Seguridad y consistencia:** La aplicación sanea el nombre de archivo, guarda las exportaciones en `userData/exports` y el contenido usa exactamente los datos actualmente cargados con los filtros seleccionados.
+- **Verificado:** `npx tsc --noEmit` y `npx vite build` correctos; el bundle incluye la generación PDF, el CSV con BOM UTF-8 y el canal Electron de exportación.
+
 ## Pendiente inmediato
 
-1. Prueba manual: registrar una venta de producto con descuento y verificar venta neta, costo, utilidad y margen en Reportes.
-2. Prueba manual: seleccionar un cliente con varias compras y comprobar su frecuencia, total e historial al cambiar el rango de Reportes.
-3. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
-4. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
-5. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
-6. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
-7. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+1. Prueba manual: abrir Reportes, cambiar el rango de fechas y verificar que CSV/PDF reflejen el mismo corte; abrir el PDF y enviarlo a una impresora.
+2. Prueba manual: registrar una venta de producto con descuento y verificar venta neta, costo, utilidad y margen en Reportes.
+3. Prueba manual: seleccionar un cliente con varias compras y comprobar su frecuencia, total e historial al cambiar el rango de Reportes.
+4. Prueba manual: comparar el costo/precio de dos compras del mismo producto y aplicar los filtros de proveedor y producto en Reportes.
+5. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
+6. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+7. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+8. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.

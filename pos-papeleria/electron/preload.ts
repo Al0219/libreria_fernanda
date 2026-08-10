@@ -87,6 +87,10 @@ const api = {
     getPrintPrices: () => ipcRenderer.invoke('config:getPrintPrices'),
     setPrintPrice: (id: number, price: number) => ipcRenderer.invoke('config:setPrintPrice', id, price),
   },
+  // Exportaciones
+  exports: {
+    saveAndOpen: (buffer: Uint8Array, filename: string) => ipcRenderer.invoke('exports:saveAndOpen', buffer, filename),
+  },
   // PDF
   pdf: {
     saveAndOpen: (buffer: Uint8Array, filename: string) =>

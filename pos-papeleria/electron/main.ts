@@ -85,6 +85,20 @@ app.whenReady().then(async () => {
     }
   })
 
+  // Exportaciones: guardar y abrir con la aplicación predeterminada
+  ipcMain.handle('exports:saveAndOpen', async (_e, buffer: Uint8Array, filename: string) => {
+    try {
+      const dir = path.join(app.getPath('userData'), 'exports')
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      const safeName = path.basename(String(filename || 'reporte'))
+      const filePath = path.join(dir, safeName)
+      fs.writeFileSync(filePath, Buffer.from(buffer))
+      await shell.openPath(filePath)
+      return { ok: true, path: filePath }
+    } catch (err: any) {
+      return { ok: false, error: err.message }
+    }
+  })
   createWindow()
 
   app.on('activate', () => {
