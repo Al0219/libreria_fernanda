@@ -65,6 +65,29 @@
   --shadow-lg: 0 8px 32px rgba(15, 23, 42, .28);
 }
 
+/* Tema suave: reduce brillo y saturación para paneles que exageran los pasteles. */
+:root[data-theme='soft'] {
+  --bg-base: #F5F5F4;
+  --bg-surface: #FFFEFC;
+  --bg-elevated: #EAE7E1;
+  --bg-hover: #DEDAD2;
+  --sidebar-bg: #EEECE7;
+  --accent-primary: #527A96;
+  --accent-primary-hover: #3D647F;
+  --accent-success: #5F887A;
+  --accent-warning: #A77C38;
+  --accent-danger: #A86262;
+  --accent-info: #6C8291;
+  --text-primary: #30343A;
+  --text-secondary: #555C64;
+  --text-muted: #7A8188;
+  --border: #D1CDC5;
+  --border-subtle: #E3E0DA;
+  --shadow-sm: 0 1px 3px rgba(48, 52, 58, .06);
+  --shadow-md: 0 4px 16px rgba(48, 52, 58, .08);
+  --shadow-lg: 0 8px 32px rgba(48, 52, 58, .10);
+}
+
 :root[data-theme='high-contrast'] .btn,
 :root[data-theme='high-contrast'] .input,
 :root[data-theme='high-contrast'] .select,

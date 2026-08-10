@@ -226,3 +226,10 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - Alto contraste usa fondos neutros, bordes mas marcados y separa azul, verde, alertas y textos para paneles con baja fidelidad de color; el cambio se aplica de inmediato y se conserva al reiniciar.
 - Verificado: `npx tsc --noEmit`, `npx vite build` y `git diff --check` correctos.
 - Pendiente manual: seleccionar Alto contraste en la HP 250 G7 y confirmar que azul y verde se distinguen adecuadamente.
+## 2026-08-09 — Tema suave para pantallas de bajo contraste
+
+- Configuración incorpora **Suave (menos contraste)** junto con Estándar y Alto contraste.
+- El tema suave usa fondos gris cálido, barra lateral neutra y acentos azul, verde y alertas menos saturados; está pensado para pantallas donde los colores pastel brillantes se distinguen mal.
+- La preferencia se aplica al instante y permanece guardada como `ui_theme=soft`.
+- Verificado: `npx tsc --noEmit`, `npx vite build`, `git diff --check` y paquete portable `release/win-unpacked` regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.
+- Pendiente manual: en la HP 250 G7 elegir **Suave (menos contraste)** desde Configuración y evaluar la legibilidad general.

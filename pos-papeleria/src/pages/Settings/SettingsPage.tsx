@@ -194,8 +194,8 @@ export default function SettingsPage() {
 
         <div className="card">
           <h3 style={{ fontSize: 15, fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}><Palette size={16} style={{ color: 'var(--accent-primary)' }} /> Tema y visibilidad</h3>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>Alto contraste usa azul, verde y bordes mas separados para pantallas con colores limitados.</p>
-          <div className="form-group"><label className="form-label">Tema visual</label><select className="select" value={normalizeTheme(config.ui_theme)} onChange={e => updateTheme(e.target.value)}><option value="standard">Estandar</option><option value="high-contrast">Alto contraste</option></select></div>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginBottom: 14 }}>Suave reduce el brillo y la saturación para pantallas donde los tonos pastel se ven demasiado intensos. Alto contraste conserva bordes y colores más marcados.</p>
+          <div className="form-group"><label className="form-label">Tema visual</label><select className="select" value={normalizeTheme(config.ui_theme)} onChange={e => updateTheme(e.target.value)}><option value="standard">Estandar</option><option value="soft">Suave (menos contraste)</option><option value="high-contrast">Alto contraste</option></select></div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}><button className="btn btn-primary" onClick={saveTheme}><Save size={15} /> {themeSaved ? 'Guardado' : 'Guardar tema'}</button></div>
         </div>
         <div className="card">

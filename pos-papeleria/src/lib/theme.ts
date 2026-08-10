@@ -1,7 +1,8 @@
-export type AppTheme = 'standard' | 'high-contrast'
+export type AppTheme = 'standard' | 'soft' | 'high-contrast'
 
 export function normalizeTheme(value?: string | null): AppTheme {
-  return value === 'high-contrast' ? 'high-contrast' : 'standard'
+  if (value === 'soft' || value === 'high-contrast') return value
+  return 'standard'
 }
 
 export function applyTheme(value?: string | null) {
