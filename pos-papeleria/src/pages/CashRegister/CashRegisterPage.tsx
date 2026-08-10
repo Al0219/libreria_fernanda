@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Banknote, CircleAlert, ClipboardCheck, Coins, MinusCircle, PlusCircle, ReceiptText, WalletCards } from 'lucide-react'
+import { Banknote, CircleAlert, ClipboardCheck, Coins, MinusCircle, PlusCircle, ReceiptText, RotateCcw, Trash2, WalletCards } from 'lucide-react'
 import { api } from '../../lib/api'
+import ConfirmModal from '../../components/ConfirmModal'
 import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
 
 const formatMoney = (value: number) => 'Q' + Number(value || 0).toFixed(2)
@@ -66,6 +67,8 @@ export default function CashRegisterPage() {
   const [expenseAmount, setExpenseAmount] = useState('')
   const [countedCash, setCountedCash] = useState('')
   const [closingNotes, setClosingNotes] = useState('')
+  const [showReopenConfirm, setShowReopenConfirm] = useState(false)
+  const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -117,6 +120,23 @@ export default function CashRegisterPage() {
     await load()
   }
 
+  const reopenRegister = async () => {
+    setSaving(true)
+    const result: any = await api.cashRegister.reopen()
+    setSaving(false)
+    if (!result.success) { setError(result.error || 'No se pudo reabrir la caja.'); return }
+    await load()
+  }
+
+  const deleteExpense = async () => {
+    if (!expenseToDelete) return
+    setSaving(true)
+    const result: any = await api.cashRegister.deleteExpense(expenseToDelete.id)
+    setSaving(false)
+    if (!result.success) { setError(result.error || 'No se pudo eliminar el gasto.'); return }
+    setExpenseToDelete(null)
+    await load()
+  }
   const date = data?.date || getBusinessDate()
   const formattedDate = formatBusinessDate(date, { day: '2-digit', month: 'long', year: 'numeric' })
   const register = data?.register
@@ -180,7 +200,10 @@ export default function CashRegisterPage() {
 
           {register.status === 'closed' && (
             <div className="card" style={{ marginBottom: 18 }}>
-              <div className="card-header"><h2 className="card-title"><ClipboardCheck size={18} /> Corte guardado</h2></div>
+              <div className="card-header" style={{ alignItems: 'center' }}>
+                <h2 className="card-title"><ClipboardCheck size={18} /> Corte guardado</h2>
+                <button className="btn btn-sm btn-primary" disabled={saving} onClick={() => setShowReopenConfirm(true)}><RotateCcw size={14} /> Reabrir caja</button>
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 26 }}>
                 <div><div className="stat-label">Efectivo contado</div><strong>{formatMoney(Number(register.counted_cash || 0))}</strong></div>
                 <div><div className="stat-label">Diferencia</div><strong style={{ color: Number(register.difference || 0) === 0 ? 'var(--accent-success)' : 'var(--accent-danger)' }}>{formatMoney(Number(register.difference || 0))}</strong></div>
@@ -191,7 +214,7 @@ export default function CashRegisterPage() {
 
           <div className="card" style={{ marginTop: 18 }}>
             <div className="card-header"><h2 className="card-title"><ReceiptText size={18} /> Gastos del día</h2></div>
-            {!data?.expenses.length ? <div className="empty-state" style={{ padding: 20 }}>No hay gastos registrados.</div> : <div className="table-container"><table><thead><tr><th>Categoría</th><th>Descripción</th><th style={{ textAlign: 'right' }}>Monto</th></tr></thead><tbody>{data.expenses.map(expense => <tr key={expense.id}><td>{expense.category}</td><td>{expense.description}</td><td style={{ textAlign: 'right', color: 'var(--accent-danger)', fontWeight: 700 }}>-{formatMoney(expense.amount)}</td></tr>)}</tbody></table></div>}
+            {!data?.expenses.length ? <div className="empty-state" style={{ padding: 20 }}>No hay gastos registrados.</div> : <div className="table-container"><table><thead><tr><th>Categoría</th><th>Descripción</th><th style={{ textAlign: 'right' }}>Monto</th>{register.status === 'open' && <th style={{ width: 90 }}></th>}</tr></thead><tbody>{data.expenses.map(expense => <tr key={expense.id}><td>{expense.category}</td><td>{expense.description}</td><td style={{ textAlign: 'right', color: 'var(--accent-danger)', fontWeight: 700 }}>-{formatMoney(expense.amount)}</td>{register.status === 'open' && <td><button className="btn btn-sm btn-danger" disabled={saving} onClick={() => setExpenseToDelete(expense)} title="Eliminar gasto"><Trash2 size={14} /></button></td>}</tr>)}</tbody></table></div>}
           </div>
         </>
       )}
@@ -202,6 +225,27 @@ export default function CashRegisterPage() {
       </div>
 
       <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 14 }}>Las ventas y compras solo afectan este corte si se registran en efectivo. Compras con tarjeta, transferencia, crédito o sin método histórico no cambian el efectivo esperado.</p>
+      {showReopenConfirm && (
+        <ConfirmModal
+          title="¿Reabrir la caja de hoy?"
+          message="El corte guardado se habilitará para corrección. Podrás ajustar gastos y volver a realizar el cierre antes de terminar el día."
+          confirmLabel="Reabrir caja"
+          danger
+          onConfirm={() => { setShowReopenConfirm(false); reopenRegister() }}
+          onCancel={() => setShowReopenConfirm(false)}
+        />
+      )}
+
+      {expenseToDelete && (
+        <ConfirmModal
+          title="¿Eliminar este gasto?"
+          message={'Se eliminará el gasto de ' + formatMoney(expenseToDelete.amount) + ': ' + expenseToDelete.description + '. Esta acción solo está disponible antes del cierre.'}
+          confirmLabel="Eliminar gasto"
+          danger
+          onConfirm={deleteExpense}
+          onCancel={() => setExpenseToDelete(null)}
+        />
+      )}
     </div>
   )
 }

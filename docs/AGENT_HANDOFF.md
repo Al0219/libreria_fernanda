@@ -117,6 +117,11 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Compras y efectivo:** Las compras ahora piden medio de pago. Solo las nuevas compras pagadas en **efectivo** reducen el efectivo esperado; tarjeta, transferencia y crédito no. Las compras anteriores se migran como `unknown`, por lo que no alteran cortes nuevos por una suposición errónea. Las compras y ventas canceladas se excluyen.
 - **Fórmula:** `fondo inicial + ventas en efectivo - compras en efectivo - gastos de caja`.
 - **Verificado:** `npx tsc --noEmit`, `npx vite build` y prueba aislada de SQLite (incluye compras canceladas, tarjeta e histórico) correctas. El empaquetado completo sigue limitado por el privilegio de enlaces simbólicos de Windows al extraer `winCodeSign`.
+## Actualización 2026-08-09: reapertura y corrección de gastos de caja
+
+- **Reapertura:** Un corte ya cerrado puede reabrirse únicamente en la fecha comercial actual. Se limpian el contado, esperado, diferencia y nota de ese cierre para que se recalculen al guardar el nuevo corte.
+- **Gastos:** Cada gasto de la caja actual abierta ahora tiene botón de eliminación con confirmación. El proceso principal valida además el identificador, la fecha comercial, la pertenencia a la caja actual y que siga abierta; no permite eliminar gastos de días anteriores ni de cajas cerradas.
+- **Verificado:** `npx tsc --noEmit`, `npx vite build` y prueba SQLite de reapertura, eliminación del gasto actual y bloqueo fuera del período correctas.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

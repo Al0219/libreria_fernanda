@@ -66,6 +66,8 @@ const api = {
     open: (data: { openingAmount: number; notes?: string }) => ipcRenderer.invoke('cashRegister:open', data),
     addExpense: (data: { category: string; description: string; amount: number }) => ipcRenderer.invoke('cashRegister:addExpense', data),
     close: (data: { countedCash: number; notes?: string }) => ipcRenderer.invoke('cashRegister:close', data),
+    reopen: () => ipcRenderer.invoke('cashRegister:reopen'),
+    deleteExpense: (id: number) => ipcRenderer.invoke('cashRegister:deleteExpense', id),
   },
   // Configuración
   config: {

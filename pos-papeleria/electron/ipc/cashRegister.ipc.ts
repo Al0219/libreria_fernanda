@@ -113,4 +113,47 @@ export function registerCashRegisterHandlers(ipcMain: IpcMain) {
     if (result.success) saveDb()
     return result
   })
+  ipcMain.handle('cashRegister:reopen', () => {
+    const date = businessDate()
+    const db = getDb()
+    const result = transaction(db, () => {
+      const register = queryFirst(db, 'SELECT id, status FROM cash_registers WHERE business_date=?', [date])
+      if (!register) return { success: false, error: 'No existe una caja para el día actual.' }
+      if (register.status !== 'closed') return { success: false, error: 'La caja ya está abierta.' }
+
+      run(db,
+        'UPDATE cash_registers SET status=?, expected_cash=NULL, counted_cash=NULL, difference=NULL, closing_notes=NULL, closed_at=NULL WHERE id=?',
+        ['open', register.id]
+      )
+      return { success: true }
+    })
+    if (result.success) saveDb()
+    return result
+  })
+
+  ipcMain.handle('cashRegister:deleteExpense', (_e, id: number) => {
+    const expenseId = Number(id)
+    if (!Number.isInteger(expenseId) || expenseId <= 0) {
+      return { success: false, error: 'El gasto indicado no es válido.' }
+    }
+
+    const date = businessDate()
+    const db = getDb()
+    const result = transaction(db, () => {
+      const register = queryFirst(db, 'SELECT id, status FROM cash_registers WHERE business_date=?', [date])
+      if (!register) return { success: false, error: 'No hay una caja abierta para el día actual.' }
+      if (register.status !== 'open') return { success: false, error: 'La caja ya fue cerrada; no se pueden eliminar gastos.' }
+
+      const expense = queryFirst(db,
+        'SELECT id FROM cash_expenses WHERE id=? AND cash_register_id=? AND business_date=?',
+        [expenseId, register.id, date]
+      )
+      if (!expense) return { success: false, error: 'El gasto no corresponde a la caja actual.' }
+
+      run(db, 'DELETE FROM cash_expenses WHERE id=?', [expenseId])
+      return { success: true }
+    })
+    if (result.success) saveDb()
+    return result
+  })
 }
