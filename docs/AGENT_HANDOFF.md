@@ -239,3 +239,9 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - Se eliminó el menú predeterminado `File / Edit / View / Window / Help` de la ventana de Windows.
 - La aplicación mantiene su barra de título y los controles de minimizar, maximizar y cerrar.
 - Verificado: `npx tsc --noEmit`, `npx vite build`, `git diff --check` y paquete portable `release/win-unpacked` regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.
+
+## 2026-08-09 — Inicio de ventana maximizada
+
+- POS Papelería se abre maximizada, equivalente al botón de maximizar de Windows y no al modo F11.
+- La barra de título, los controles de la ventana y la posibilidad de restaurar el tamaño se conservan.
+- Verificado: `npx tsc --noEmit`, `npx vite build`, `git diff --check` y paquete portable `release/win-unpacked` regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.

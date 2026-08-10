@@ -48,6 +48,7 @@ function createWindow() {
     autoHideMenuBar: true,
   })
 
+  win.maximize()
 
   win.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
