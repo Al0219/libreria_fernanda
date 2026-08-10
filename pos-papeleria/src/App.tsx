@@ -8,6 +8,7 @@ import SalesHistoryPage from './pages/Sales/SalesHistoryPage'
 import SuppliersPage from './pages/Suppliers/SuppliersPage'
 import CustomersPage from './pages/Customers/CustomersPage'
 import ReportsPage from './pages/Reports/ReportsPage'
+import CashRegisterPage from './pages/CashRegister/CashRegisterPage'
 import SettingsPage from './pages/Settings/SettingsPage'
 
 export default function App() {
@@ -26,6 +27,7 @@ export default function App() {
               <Route path="/suppliers" element={<SuppliersPage />} />
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/cash-register" element={<CashRegisterPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </ErrorBoundary>

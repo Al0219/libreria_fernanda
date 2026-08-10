@@ -26,6 +26,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
   const [supplierId, setSupplierId] = useState<string>('')
   const [setAsPreferredSupplier, setSetAsPreferredSupplier] = useState(false)
   const [date, setDate] = useState<string>(getBusinessDate())
+  const [paymentMethod, setPaymentMethod] = useState('cash')
   const [notes, setNotes] = useState<string>('')
   
   // Lista de items del formulario
@@ -113,6 +114,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
         supplierId: supplierId ? parseInt(supplierId) : null,
         setAsPreferredSupplier: setAsPreferredSupplier && Boolean(supplierId),
         date: date || getBusinessDate(),
+        paymentMethod,
         totalAmount,
         notes: notes.trim() || null,
         items: items.map(i => ({
@@ -155,7 +157,7 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
 
           <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16, paddingRight: 4 }}>
             {/* Encabezado: Proveedor y Fecha */}
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: 12, background: 'var(--bg-elevated)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 2fr', gap: 12, background: 'var(--bg-elevated)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
               <div className="form-group">
                 <label className="form-label">Proveedor (opcional)</label>
                 <select
@@ -186,6 +188,15 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
               <div className="form-group">
                 <label className="form-label">Fecha de entrada</label>
                 <input className="input" type="date" value={date} onChange={e => setDate(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Medio de pago</label>
+                <select className="select" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
+                  <option value="cash">Efectivo</option>
+                  <option value="card">Tarjeta</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="credit">Crédito / pendiente</option>
+                </select>
               </div>
 
               <div className="form-group">

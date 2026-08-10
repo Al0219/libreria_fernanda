@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
-import { ShoppingBag, Calendar, Truck, FileText, Loader } from 'lucide-react'
+import { ShoppingBag, Calendar, Truck, FileText, Loader, CreditCard } from 'lucide-react'
 import { api } from '../../lib/api'
 
 interface PurchaseDetailModalProps {
   purchase: any // Objeto con id, date, total_amount, supplier_name, notes, etc. de la tabla principal
   onClose: () => void
 }
+
+const paymentMethodLabels: Record<string, string> = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', credit: 'Crédito / pendiente', unknown: 'Sin registro' }
 
 export default function PurchaseDetailModal({ purchase, onClose }: PurchaseDetailModalProps) {
   const [items, setItems] = useState<any[]>([])
@@ -32,7 +34,7 @@ export default function PurchaseDetailModal({ purchase, onClose }: PurchaseDetai
 
         <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Tarjeta de Resumen */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, background: 'var(--bg-elevated)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12, background: 'var(--bg-elevated)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, marginBottom: 4 }}>
                 <Calendar size={14} /> Fecha de registro
@@ -55,6 +57,14 @@ export default function PurchaseDetailModal({ purchase, onClose }: PurchaseDetai
               </div>
               <div style={{ fontWeight: 500, fontSize: 13, color: 'var(--text-secondary)' }}>
                 {purchase.notes || 'Ninguna'}
+              </div>
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--text-muted)', fontSize: 12, marginBottom: 4 }}>
+                <CreditCard size={14} /> Medio de pago
+              </div>
+              <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
+                {paymentMethodLabels[String(purchase.payment_method)] || 'Efectivo'}
               </div>
             </div>
           </div>

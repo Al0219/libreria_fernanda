@@ -5,6 +5,8 @@ import { queryAll, queryFirst, run, transaction } from '../db/helpers'
 export function registerStockEntryHandlers(ipcMain: IpcMain) {
   ipcMain.handle('stockEntries:create', (_e, data: any) => {
     const db = getDb()
+    const allowedPaymentMethods = ['cash', 'card', 'transfer', 'credit']
+    const paymentMethod = allowedPaymentMethods.includes(data.paymentMethod) ? data.paymentMethod : 'cash'
     const result = transaction(db, () => {
       const preferredSupplierId = data.setAsPreferredSupplier && data.supplierId ? Number(data.supplierId) : null
       if (preferredSupplierId) {
@@ -13,8 +15,8 @@ export function registerStockEntryHandlers(ipcMain: IpcMain) {
       }
 
       const entryId = run(db,
-        `INSERT INTO stock_entries (supplier_id, date, total_amount, notes) VALUES (?,?,?,?)`,
-        [data.supplierId || null, data.date, data.totalAmount, data.notes || null]
+        `INSERT INTO stock_entries (supplier_id, date, total_amount, payment_method, notes) VALUES (?,?,?,?,?)`,
+        [data.supplierId || null, data.date, data.totalAmount, paymentMethod, data.notes || null]
       )
 
       for (const item of data.items) {

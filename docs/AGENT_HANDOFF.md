@@ -110,6 +110,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Causa:** Reportes añadía una hora al valor de fecha antes de llamar al helper comercial; el helper ya añade esa hora, generando una fecha inválida.
 - **Solución:** El módulo ahora pasa la fecha comercial sin duplicarla para el título y las gráficas.
 - **Verificado:** Formateo de fecha comercial, `tsc --noEmit` y `vite build` correctos.
+## Actualización 2026-08-09: caja diaria y gastos
+
+- **Caja:** Se añadió el módulo `Caja` con apertura por fecha comercial de Guatemala, fondo inicial, efectivo esperado, conteo físico, diferencia y un historial de los últimos 30 cortes. Solo se permite una apertura por día y, tras el cierre, sus importes quedan guardados.
+- **Gastos:** Durante una caja abierta se pueden registrar gastos de alimentación, gasto personal, suministros, transporte u otro, con descripción y monto. Cada gasto resta el efectivo esperado y queda visible en el corte.
+- **Compras y efectivo:** Las compras ahora piden medio de pago. Solo las nuevas compras pagadas en **efectivo** reducen el efectivo esperado; tarjeta, transferencia y crédito no. Las compras anteriores se migran como `unknown`, por lo que no alteran cortes nuevos por una suposición errónea. Las compras y ventas canceladas se excluyen.
+- **Fórmula:** `fondo inicial + ventas en efectivo - compras en efectivo - gastos de caja`.
+- **Verificado:** `npx tsc --noEmit`, `npx vite build` y prueba aislada de SQLite (incluye compras canceladas, tarjeta e histórico) correctas. El empaquetado completo sigue limitado por el privilegio de enlaces simbólicos de Windows al extraer `winCodeSign`.
 ## Pendiente inmediato
 
 1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.

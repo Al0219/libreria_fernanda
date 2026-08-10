@@ -11,6 +11,7 @@ import { registerReportHandlers } from './ipc/reports.ipc'
 import { registerConfigHandlers } from './ipc/config.ipc'
 import { registerStockEntryHandlers } from './ipc/stockEntries.ipc'
 import { registerCustomerHandlers } from './ipc/customers.ipc'
+import { registerCashRegisterHandlers } from './ipc/cashRegister.ipc'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -66,6 +67,7 @@ app.whenReady().then(async () => {
   registerConfigHandlers(ipcMain)
   registerStockEntryHandlers(ipcMain)
   registerCustomerHandlers(ipcMain)
+  registerCashRegisterHandlers(ipcMain)
 
   // PDF: guardar buffer y abrir con visor del sistema
   ipcMain.handle('pdf:saveAndOpen', async (_e, buffer: Uint8Array, filename: string) => {

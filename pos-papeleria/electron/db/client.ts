@@ -133,6 +133,7 @@ function createTables() {
       supplier_id INTEGER REFERENCES suppliers(id),
       date TEXT NOT NULL,
       total_amount REAL NOT NULL DEFAULT 0,
+      payment_method TEXT NOT NULL DEFAULT 'cash',
       notes TEXT,
       cancelled INTEGER NOT NULL DEFAULT 0,
       created_at TEXT DEFAULT (datetime('now'))
@@ -175,6 +176,29 @@ function createTables() {
       metadata_json TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS cash_registers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_date TEXT NOT NULL UNIQUE,
+      opening_amount REAL NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      expected_cash REAL,
+      counted_cash REAL,
+      difference REAL,
+      opening_notes TEXT,
+      closing_notes TEXT,
+      opened_at TEXT DEFAULT (datetime('now')),
+      closed_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS cash_expenses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      cash_register_id INTEGER NOT NULL REFERENCES cash_registers(id),
+      business_date TEXT NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT NOT NULL,
+      amount REAL NOT NULL,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
     CREATE TABLE IF NOT EXISTS print_prices (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       paper_type TEXT NOT NULL,
@@ -222,6 +246,13 @@ function runMigrations() {
     // La columna ya existe — ignorar
   }
 
+  // Agregar medio de pago a compras existentes; no asumir efectivo en históricos
+  try {
+    db.run("ALTER TABLE stock_entries ADD COLUMN payment_method TEXT NOT NULL DEFAULT 'unknown'")
+    console.log('[DB] Migración: columna payment_method agregada a stock_entries')
+  } catch {
+    // La columna ya existe — ignorar
+  }
   // Agregar costo histórico a los detalles de ventas existentes
   try {
     db.run(`ALTER TABLE sale_items ADD COLUMN unit_cost REAL`)

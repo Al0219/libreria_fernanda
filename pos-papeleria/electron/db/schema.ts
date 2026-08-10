@@ -61,6 +61,7 @@ export const stockEntries = sqliteTable('stock_entries', {
   supplierId: integer('supplier_id').references(() => suppliers.id),
   date: text('date').notNull(),
   totalAmount: real('total_amount').notNull().default(0),
+  paymentMethod: text('payment_method').notNull().default('cash'),
   notes: text('notes'),
   cancelled: integer('cancelled', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
@@ -107,6 +108,30 @@ export const saleItems = sqliteTable('sale_items', {
   metadataJson: text('metadata_json'), // datos extra según item_type
 })
 
+// ─── Caja y gastos ───────────────────────────────────────────────────────────
+export const cashRegisters = sqliteTable('cash_registers', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  businessDate: text('business_date').notNull(),
+  openingAmount: real('opening_amount').notNull(),
+  status: text('status').notNull().default('open'),
+  expectedCash: real('expected_cash'),
+  countedCash: real('counted_cash'),
+  difference: real('difference'),
+  openingNotes: text('opening_notes'),
+  closingNotes: text('closing_notes'),
+  openedAt: text('opened_at').default(sql`CURRENT_TIMESTAMP`),
+  closedAt: text('closed_at'),
+})
+
+export const cashExpenses = sqliteTable('cash_expenses', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  cashRegisterId: integer('cash_register_id').references(() => cashRegisters.id).notNull(),
+  businessDate: text('business_date').notNull(),
+  category: text('category').notNull(),
+  description: text('description').notNull(),
+  amount: real('amount').notNull(),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+})
 // ─── Precios de Impresión ─────────────────────────────────────────────────────
 export const printPrices = sqliteTable('print_prices', {
   id: integer('id').primaryKey({ autoIncrement: true }),

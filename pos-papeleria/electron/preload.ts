@@ -59,6 +59,14 @@ const api = {
     getDailyCashRegister: (date?: string) => ipcRenderer.invoke('reports:getDailyCashRegister', date),
     getLowStockReport: () => ipcRenderer.invoke('reports:getLowStockReport'),
   },
+  // Caja y gastos
+  cashRegister: {
+    getToday: () => ipcRenderer.invoke('cashRegister:getToday'),
+    getHistory: () => ipcRenderer.invoke('cashRegister:getHistory'),
+    open: (data: { openingAmount: number; notes?: string }) => ipcRenderer.invoke('cashRegister:open', data),
+    addExpense: (data: { category: string; description: string; amount: number }) => ipcRenderer.invoke('cashRegister:addExpense', data),
+    close: (data: { countedCash: number; notes?: string }) => ipcRenderer.invoke('cashRegister:close', data),
+  },
   // Configuración
   config: {
     get: (key: string) => ipcRenderer.invoke('config:get', key),

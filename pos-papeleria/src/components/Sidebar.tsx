@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   ShoppingCart, Package, Truck, BarChart2,
-  Settings, Store, ShoppingBag, Receipt, UsersRound
+  Settings, Store, ShoppingBag, Receipt, UsersRound, WalletCards
 } from 'lucide-react'
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
   { to: '/suppliers', icon: Truck,        label: 'Proveedores' },
   { to: '/customers', icon: UsersRound,   label: 'Clientes' },
   { to: '/reports',   icon: BarChart2,    label: 'Reportes' },
+  { to: '/cash-register', icon: WalletCards, label: 'Caja' },
 ]
 
 export default function Sidebar() {
