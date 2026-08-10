@@ -144,8 +144,16 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Protecciones:** No se permiten créditos sin cliente/autorización/límite, con vencimiento pasado, por encima del límite ni anticipos iguales o mayores al total. No se puede cancelar una venta a crédito que ya tiene dinero aplicado; una cuenta sin pagos sí se cancela junto con la venta y el inventario se restaura.
 - **Verificado:** prueba SQLite de límite, anticipo, abonos, cierre de cuenta y cancelación; `npx tsc --noEmit` y `npx vite build` correctos. El empaquetado completo continúa sujeto al privilegio de enlaces simbólicos de Windows ya documentado.
 
+## Actualización 2026-08-09: reportes fase 3 — existencias y alertas
+
+- **Estado actual:** Reportes incorpora el valor total del inventario al costo vigente, unidades disponibles, productos bajo stock y agotados; solo considera productos activos. El valor no usa precio de venta ni existencias negativas.
+- **Alertas accionables:** Las tablas separan productos con existencia en o debajo del mínimo de los agotados, e incluyen código, categoría, cantidad mínima y valor al costo.
+- **Sin movimiento:** El período del filtro de Reportes identifica productos que no tuvieron ninguna compra ni venta activa dentro de esas fechas. Muestra el último movimiento válido conocido y excluye compras o ventas canceladas.
+- **Verificado:** prueba SQLite de valorización, bajo stock, agotados y movimientos cancelados; `npx tsc --noEmit` y `npx vite build` correctos.
+
 ## Pendiente inmediato
 
-1. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
-2. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
-3. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+1. Prueba manual: cambiar el rango de fechas de Reportes y confirmar que “sin movimiento” varía sin alterar la valorización actual.
+2. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+3. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+4. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.

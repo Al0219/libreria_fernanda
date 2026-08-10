@@ -85,6 +85,48 @@ export function registerReportHandlers(ipcMain: IpcMain) {
       'WHERE p.active=1 AND p.stock <= p.min_stock ORDER BY (p.stock - p.min_stock) ASC'
     )
   })
+  ipcMain.handle('reports:getInventoryStatus', (_e, from: string, to: string) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+      throw new Error('Rango de fechas inválido para el reporte de inventario.')
+    }
+
+    const db = getDb()
+    const summary = queryFirst(db,
+      'SELECT COUNT(*) as active_products, COALESCE(SUM(CASE WHEN stock > 0 THEN stock ELSE 0 END), 0) as units_in_stock, ' +
+      'COALESCE(SUM(CASE WHEN stock > 0 THEN stock * purchase_price ELSE 0 END), 0) as inventory_cost, ' +
+      'COALESCE(SUM(CASE WHEN stock > 0 AND stock <= min_stock THEN 1 ELSE 0 END), 0) as low_stock_count, ' +
+      'COALESCE(SUM(CASE WHEN stock <= 0 THEN 1 ELSE 0 END), 0) as out_of_stock_count ' +
+      'FROM products WHERE active=1'
+    ) || { active_products: 0, units_in_stock: 0, inventory_cost: 0, low_stock_count: 0, out_of_stock_count: 0 }
+
+    const columns = 'p.id, p.name, p.sku, p.stock, p.min_stock, p.purchase_price, c.name as category_name, s.name as supplier_name '
+    const joins = 'FROM products p LEFT JOIN categories c ON p.category_id=c.id LEFT JOIN suppliers s ON p.supplier_id=s.id '
+
+    const lowStock = queryAll(db,
+      'SELECT ' + columns + joins +
+      'WHERE p.active=1 AND p.stock > 0 AND p.stock <= p.min_stock ORDER BY (p.stock - p.min_stock) ASC, p.name ASC'
+    )
+    const outOfStock = queryAll(db,
+      'SELECT ' + columns + joins +
+      'WHERE p.active=1 AND p.stock <= 0 ORDER BY p.name ASC'
+    )
+
+    const withoutMovement = queryAll(db,
+      'SELECT ' + columns +
+      'last_sales.last_sale_date, last_purchases.last_purchase_date, ' +
+      'CASE WHEN last_sales.last_sale_date IS NULL THEN last_purchases.last_purchase_date ' +
+      'WHEN last_purchases.last_purchase_date IS NULL THEN last_sales.last_sale_date ' +
+      'WHEN last_sales.last_sale_date >= last_purchases.last_purchase_date THEN last_sales.last_sale_date ELSE last_purchases.last_purchase_date END as last_movement_date ' +
+      joins +
+      'LEFT JOIN (SELECT si.product_id, MAX(s.date) as last_sale_date FROM sale_items si JOIN sales s ON s.id=si.sale_id WHERE ' + activeSalesCondition + ' GROUP BY si.product_id) last_sales ON last_sales.product_id=p.id ' +
+      'LEFT JOIN (SELECT sei.product_id, MAX(se.date) as last_purchase_date FROM stock_entry_items sei JOIN stock_entries se ON se.id=sei.entry_id WHERE (se.cancelled IS NULL OR se.cancelled=0) GROUP BY sei.product_id) last_purchases ON last_purchases.product_id=p.id ' +
+      'WHERE p.active=1 AND NOT EXISTS (SELECT 1 FROM sale_items si JOIN sales s ON s.id=si.sale_id WHERE si.product_id=p.id AND s.date BETWEEN ? AND ? AND ' + activeSalesCondition + ' UNION ALL SELECT 1 FROM stock_entry_items sei JOIN stock_entries se ON se.id=sei.entry_id WHERE sei.product_id=p.id AND se.date BETWEEN ? AND ? AND (se.cancelled IS NULL OR se.cancelled=0)) ' +
+      'ORDER BY CASE WHEN last_movement_date IS NULL THEN 0 ELSE 1 END ASC, last_movement_date ASC, p.name ASC',
+      [from, to, from, to]
+    )
+
+    return { summary: { ...summary, without_movement_count: withoutMovement.length }, lowStock, outOfStock, withoutMovement, from, to }
+  })
   ipcMain.handle('reports:getSalesPerformance', (_e, from: string, to: string, groupBy: 'day' | 'week' | 'month' = 'day') => {
     const db = getDb()
     const start = new Date(from + 'T00:00:00Z')

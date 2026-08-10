@@ -59,6 +59,7 @@ const api = {
     getTopProducts: (limit?: number) => ipcRenderer.invoke('reports:getTopProducts', limit),
     getDailyCashRegister: (date?: string) => ipcRenderer.invoke('reports:getDailyCashRegister', date),
     getLowStockReport: () => ipcRenderer.invoke('reports:getLowStockReport'),
+    getInventoryStatus: (from: string, to: string) => ipcRenderer.invoke('reports:getInventoryStatus', from, to),
   },
   // Cuentas por cobrar
   credits: {

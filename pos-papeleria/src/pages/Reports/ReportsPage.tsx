@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../lib/api'
 import { formatBusinessDate, getBusinessDate } from '../../lib/business-time'
-import { Award, BadgePercent, Banknote, BarChart2, CalendarDays, CreditCard, Landmark, Layers3, Package, TrendingUp, Wrench } from 'lucide-react'
+import { AlertTriangle, Award, BadgePercent, Banknote, BarChart2, Boxes, CalendarDays, Clock3, CreditCard, Landmark, Layers3, Package, PackageX, TrendingUp, Wrench } from 'lucide-react'
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 interface Summary {
@@ -63,6 +63,38 @@ interface SalesPerformance {
   products: RankRow[]
   categories: RankRow[]
   services: RankRow[]
+}
+
+interface InventorySummary {
+  active_products: number
+  units_in_stock: number
+  inventory_cost: number
+  low_stock_count: number
+  out_of_stock_count: number
+  without_movement_count: number
+}
+
+interface InventoryProduct {
+  id: number
+  name: string
+  sku?: string
+  stock: number
+  min_stock: number
+  purchase_price: number
+  category_name?: string
+  supplier_name?: string
+  last_sale_date?: string | null
+  last_purchase_date?: string | null
+  last_movement_date?: string | null
+}
+
+interface InventoryStatus {
+  summary: InventorySummary
+  lowStock: InventoryProduct[]
+  outOfStock: InventoryProduct[]
+  withoutMovement: InventoryProduct[]
+  from: string
+  to: string
 }
 
 type GroupBy = 'day' | 'week' | 'month'
@@ -147,6 +179,40 @@ function RankingTable({ title, subtitle, icon: Icon, items, accent, meta }: {
   )
 }
 
+function InventoryTable({ title, subtitle, icon: Icon, items, accent, showMovement = false }: {
+  title: string
+  subtitle: string
+  icon: any
+  items: InventoryProduct[]
+  accent: string
+  showMovement?: boolean
+}) {
+  return (
+    <div className="card">
+      <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 3, display: 'flex', alignItems: 'center', gap: 7 }}>
+        <Icon size={16} style={{ color: accent }} /> {title}
+      </h3>
+      <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-muted)' }}>{subtitle}</p>
+      {items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 13 }}>Sin productos para mostrar.</div>
+      ) : (
+        <div className="table-container">
+          <table>
+            <thead><tr><th>Producto</th><th style={{ textAlign: 'right' }}>Existencia</th><th style={{ textAlign: 'right' }}>Valor al costo</th>{showMovement && <th>Último movimiento</th>}</tr></thead>
+            <tbody>
+              {items.map(item => <tr key={item.id}>
+                <td><div style={{ fontWeight: 600 }}>{item.name}</div><div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.sku || 'Sin código'}{item.category_name ? ' · ' + item.category_name : ''}</div></td>
+                <td style={{ textAlign: 'right', fontWeight: 700, color: Number(item.stock) <= 0 ? 'var(--accent-danger)' : accent }}>{Number(item.stock)}{!showMovement && <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-muted)' }}>Mín. {Number(item.min_stock)}</div>}</td>
+                <td style={{ textAlign: 'right' }}>{formatMoney(Math.max(Number(item.stock), 0) * Number(item.purchase_price || 0))}</td>
+                {showMovement && <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{item.last_movement_date ? formatReportDate(item.last_movement_date) : 'Sin registros'}</td>}
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
 export default function ReportsPage() {
   const today = getBusinessDate()
   const [from, setFrom] = useState(today)
@@ -154,6 +220,7 @@ export default function ReportsPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>('day')
   const [report, setReport] = useState<OperationalReport | null>(null)
   const [performance, setPerformance] = useState<SalesPerformance | null>(null)
+  const [inventory, setInventory] = useState<InventoryStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -171,11 +238,13 @@ export default function ReportsPage() {
     Promise.all([
       api.reports.getOperationalSummary(from, to),
       api.reports.getSalesPerformance(from, to, groupBy),
+      api.reports.getInventoryStatus(from, to),
     ])
-      .then(([operational, salesPerformance]: any[]) => {
+      .then(([operational, salesPerformance, inventoryStatus]: any[]) => {
         if (!active) return
         setReport(operational as OperationalReport)
         setPerformance(salesPerformance as SalesPerformance)
+        setInventory(inventoryStatus as InventoryStatus)
       })
       .catch(() => {
         if (active) setError('No se pudo cargar el reporte. Intenta nuevamente.')
@@ -188,6 +257,7 @@ export default function ReportsPage() {
   }, [from, to, groupBy])
 
   const summary = report?.summary
+  const inventorySummary = inventory?.summary
   const dailyData = useMemo(() => (report?.daily || []).map(day => ({
     name: formatChartDate(day.date),
     total: Number(day.total),
@@ -229,7 +299,7 @@ export default function ReportsPage() {
     setTo(today)
   }
 
-  if (loading && (!report || !performance)) {
+  if (loading && (!report || !performance || !inventory)) {
     return <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Cargando reportes...</div>
   }
 
@@ -316,6 +386,32 @@ export default function ReportsPage() {
             <RankingTable title="Productos más vendidos" subtitle="Ranking por ventas brutas" icon={Package} accent="#3b82f6" items={performance?.products || []} meta={item => item.category_name} />
             <RankingTable title="Categorías más vendidas" subtitle="Ranking por ventas brutas" icon={Layers3} accent="#10b981" items={performance?.categories || []} meta={item => Number(item.sale_count || 0) + ' venta(s)'} />
             <RankingTable title="Servicios más vendidos" subtitle="Impresiones e investigaciones" icon={Wrench} accent="#f59e0b" items={performance?.services || []} meta={item => typeMap[item.item_type || '']?.label || item.item_type} />
+          </div>
+
+          <div style={{ margin: '30px 0 12px' }}>
+            <h2 style={{ fontSize: 18, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}><Boxes size={20} style={{ color: 'var(--accent-primary)' }} />Existencias y alertas</h2>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: '5px 0 0' }}>Existencias y valorización al costo actual. “Sin movimiento” considera compras y ventas activas del período seleccionado.</p>
+          </div>
+
+          <div className="grid-cols-4" style={{ marginBottom: 16 }}>
+            {[
+              { label: 'Valor del inventario', value: formatMoney(Number(inventorySummary?.inventory_cost || 0)), icon: Boxes, color: '#10b981', bg: 'rgba(16,185,129,0.15)' },
+              { label: 'Unidades disponibles', value: Number(inventorySummary?.units_in_stock || 0), icon: Package, color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
+              { label: 'Productos bajo stock', value: Number(inventorySummary?.low_stock_count || 0), icon: AlertTriangle, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+              { label: 'Productos agotados', value: Number(inventorySummary?.out_of_stock_count || 0), icon: PackageX, color: '#ef4444', bg: 'rgba(239,68,68,0.15)' },
+            ].map(({ label, value, icon: Icon, color, bg }) => (
+              <div key={label} className="stat-card"><div className="stat-icon" style={{ background: bg }}><Icon size={20} style={{ color }} /></div><div><div className="stat-label">{label}</div><div className="stat-value" style={{ color }}>{value}</div></div></div>
+            ))}
+          </div>
+
+          <div className="card" style={{ marginBottom: 16, padding: '13px 16px', display: 'flex', gap: 10, alignItems: 'center' }}>
+            <Clock3 size={18} style={{ color: '#8b5cf6' }} /><div><strong>{Number(inventorySummary?.without_movement_count || 0)} producto(s) sin movimiento</strong><span style={{ color: 'var(--text-muted)', fontSize: 13 }}> entre {formatReportDate(from)} y {formatReportDate(to)}.</span></div>
+          </div>
+
+          <div className="grid-cols-3">
+            <InventoryTable title="Bajo stock" subtitle="Con existencia, pero en o debajo del mínimo" icon={AlertTriangle} items={inventory?.lowStock || []} accent="#f59e0b" />
+            <InventoryTable title="Agotados" subtitle="Productos activos sin unidades disponibles" icon={PackageX} items={inventory?.outOfStock || []} accent="#ef4444" />
+            <InventoryTable title="Sin movimiento" subtitle="Sin compras ni ventas activas del período" icon={Clock3} items={inventory?.withoutMovement || []} accent="#8b5cf6" showMovement />
           </div>
         </>
       )}
