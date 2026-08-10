@@ -203,3 +203,10 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - Seguridad: no se puede cancelar una compra a credito que tenga anticipos/abonos, ni borrar un proveedor con saldo pendiente.
 - Verificado: `npx tsc --noEmit` y `npx vite build` correctos. `npm run build` compila Vite/Electron, pero electron-builder no genera instalador por falta de privilegio Windows para crear symlinks de `winCodeSign`.
 - Siguiente paso recomendado: prueba manual en Electron: compra a credito con/ sin anticipo, pago parcial en Por pagar, comprobacion de Caja y bloqueo de anulacion.
+## 2026-08-09 — Rutas configurables y respaldos automaticos
+
+- Configuracion incorpora carpetas seleccionables para respaldos y documentos; los documentos se organizan automaticamente en `Tickets` y `Reportes` dentro de la ruta elegida.
+- La base activa sigue en `userData` (recomendado SSD). Al cerrar Caja se crea un respaldo en el HDD seleccionado cuando esta habilitado; un fallo del disco no invalida el corte.
+- Cada respaldo incluye `database.sqlite` y fotos de productos en una carpeta fechada. Hay boton de respaldo manual y retencion configurable (1 a 365; predeterminado 30).
+- Verificado: `npx tsc --noEmit`, `npx vite build` y `git diff --check` correctos.
+- Pendiente manual: en Electron, elegir carpetas del HDD, usar Respaldar ahora, cerrar caja y comprobar las subcarpetas creadas.

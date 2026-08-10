@@ -93,6 +93,8 @@ const api = {
     getAll: () => ipcRenderer.invoke('config:getAll'),
     getPrintPrices: () => ipcRenderer.invoke('config:getPrintPrices'),
     setPrintPrice: (id: number, price: number) => ipcRenderer.invoke('config:setPrintPrice', id, price),
+    chooseDirectory: (currentPath?: string) => ipcRenderer.invoke('config:chooseDirectory', currentPath),
+    createBackup: () => ipcRenderer.invoke('config:createBackup'),
   },
   // Exportaciones
   exports: {

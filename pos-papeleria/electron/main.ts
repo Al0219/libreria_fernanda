@@ -2,7 +2,8 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-import { initializeDatabase } from './db/client'
+import { getDb, initializeDatabase } from './db/client'
+import { queryFirst } from './db/helpers'
 import { registerProductHandlers } from './ipc/products.ipc'
 import { registerCategoryHandlers } from './ipc/categories.ipc'
 import { registerSaleHandlers } from './ipc/sales.ipc'
@@ -25,6 +26,11 @@ process.env.VITE_PUBLIC = app.isPackaged
 let win: BrowserWindow | null
 
 const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
+
+function configuredDirectory(key: string, fallbackFolder: string) {
+  const value = String(queryFirst(getDb(), 'SELECT value FROM business_config WHERE key=?', [key])?.value || '').trim()
+  return value || path.join(app.getPath('userData'), fallbackFolder)
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -76,7 +82,7 @@ app.whenReady().then(async () => {
   // PDF: guardar buffer y abrir con visor del sistema
   ipcMain.handle('pdf:saveAndOpen', async (_e, buffer: Uint8Array, filename: string) => {
     try {
-      const dir = path.join(app.getPath('userData'), 'tickets')
+      const dir = path.join(configuredDirectory('documents_directory', 'documents'), 'Tickets')
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
       const filePath = path.join(dir, filename)
       fs.writeFileSync(filePath, Buffer.from(buffer))
@@ -90,7 +96,7 @@ app.whenReady().then(async () => {
   // Exportaciones: guardar y abrir con la aplicación predeterminada
   ipcMain.handle('exports:saveAndOpen', async (_e, buffer: Uint8Array, filename: string) => {
     try {
-      const dir = path.join(app.getPath('userData'), 'exports')
+      const dir = path.join(configuredDirectory('documents_directory', 'documents'), 'Reportes')
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
       const safeName = path.basename(String(filename || 'reporte'))
       const filePath = path.join(dir, safeName)

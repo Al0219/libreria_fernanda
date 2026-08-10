@@ -1,5 +1,5 @@
 import { IpcMain } from 'electron'
-import { getDb, saveDb } from '../db/client'
+import { createBackup, getDb, saveDb } from '../db/client'
 import { queryAll, queryFirst, run, transaction } from '../db/helpers'
 import { businessDate } from '../lib/business-time'
 
@@ -117,7 +117,13 @@ export function registerCashRegisterHandlers(ipcMain: IpcMain) {
       return { success: true, expectedCash: metrics.expectedCash, difference }
     })
 
-    if (result.success) saveDb()
+    if (result.success) {
+      saveDb()
+      const autoBackup = String(queryFirst(db, 'SELECT value FROM business_config WHERE key=?', ['auto_backup_on_close'])?.value || 'true') === 'true'
+      const destination = String(queryFirst(db, 'SELECT value FROM business_config WHERE key=?', ['backup_directory'])?.value || '').trim()
+      const retention = Number(queryFirst(db, 'SELECT value FROM business_config WHERE key=?', ['backup_retention'])?.value || 30)
+      if (autoBackup && destination) return { ...result, backup: createBackup(destination, retention) }
+    }
     return result
   })
   ipcMain.handle('cashRegister:reopen', () => {

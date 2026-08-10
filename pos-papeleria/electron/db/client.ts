@@ -363,6 +363,10 @@ function seedInitialData() {
       ['business_phone', '000-000-0000'],
       ['business_email', ''],
       ['ticket_footer', 'Gracias por su compra'],
+      ['backup_directory', ''],
+      ['documents_directory', ''],
+      ['auto_backup_on_close', 'true'],
+      ['backup_retention', '30'],
     ]
     defaultConfig.forEach(([key, value]) => {
       db.run('INSERT OR IGNORE INTO business_config (key, value) VALUES (?, ?)', [key, value])
@@ -376,5 +380,28 @@ function seedInitialData() {
     const defaultCats = ['Papelería', 'Material de Oficina', 'Cuadernos', 'Útiles Escolares', 'Otros']
     defaultCats.forEach(cat => db.run('INSERT INTO categories (name) VALUES (?)', [cat]))
     console.log('[DB] Categorías por defecto creadas')
+  }
+}
+
+export function createBackup(destination: string, retention = 30) {
+  const target = String(destination || '').trim()
+  if (!target) return { ok: false, error: 'No backup folder is configured.' }
+  try {
+    saveToDisk()
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
+    const backupDir = path.join(target, `POS-backup-${stamp}`)
+    fs.mkdirSync(backupDir, { recursive: true })
+    fs.copyFileSync(dbPath, path.join(backupDir, 'database.sqlite'))
+    const photosPath = path.join(path.dirname(dbPath), 'photos')
+    if (fs.existsSync(photosPath)) fs.cpSync(photosPath, path.join(backupDir, 'photos'), { recursive: true })
+
+    const keep = Math.max(1, Math.min(365, Math.floor(Number(retention) || 30)))
+    const backups = fs.readdirSync(target, { withFileTypes: true })
+      .filter(entry => entry.isDirectory() && entry.name.startsWith('POS-backup-'))
+      .map(entry => entry.name).sort().reverse()
+    for (const name of backups.slice(keep)) fs.rmSync(path.join(target, name), { recursive: true, force: true })
+    return { ok: true, path: backupDir }
+  } catch (error: any) {
+    return { ok: false, error: error?.message || 'Could not create backup.' }
   }
 }
