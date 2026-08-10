@@ -233,3 +233,9 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - La preferencia se aplica al instante y permanece guardada como `ui_theme=soft`.
 - Verificado: `npx tsc --noEmit`, `npx vite build`, `git diff --check` y paquete portable `release/win-unpacked` regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.
 - Pendiente manual: en la HP 250 G7 elegir **Suave (menos contraste)** desde Configuración y evaluar la legibilidad general.
+
+## 2026-08-09 — Menú de Electron oculto
+
+- Se eliminó el menú predeterminado `File / Edit / View / Window / Help` de la ventana de Windows.
+- La aplicación mantiene su barra de título y los controles de minimizar, maximizar y cerrar.
+- Verificado: `npx tsc --noEmit`, `npx vite build`, `git diff --check` y paquete portable `release/win-unpacked` regenerado con `npx electron-builder --win --dir --config.win.signAndEditExecutable=false`.

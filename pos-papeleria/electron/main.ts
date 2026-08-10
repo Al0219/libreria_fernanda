@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, shell } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
@@ -45,6 +45,7 @@ function createWindow() {
     },
     title: 'POS Papelería',
     backgroundColor: '#ffffff',
+    autoHideMenuBar: true,
   })
 
 
@@ -61,6 +62,7 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  Menu.setApplicationMenu(null)
   // Inicializar base de datos (async con sql.js)
   await initializeDatabase()
 
