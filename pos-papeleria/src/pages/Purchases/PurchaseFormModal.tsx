@@ -27,6 +27,9 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
   const [setAsPreferredSupplier, setSetAsPreferredSupplier] = useState(false)
   const [date, setDate] = useState<string>(getBusinessDate())
   const [paymentMethod, setPaymentMethod] = useState('cash')
+  const [dueDate, setDueDate] = useState<string>(getBusinessDate())
+  const [initialPayment, setInitialPayment] = useState('0')
+  const [initialPaymentMethod, setInitialPaymentMethod] = useState('cash')
   const [notes, setNotes] = useState<string>('')
   
   // Lista de items del formulario
@@ -96,6 +99,8 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
   }
 
   const totalAmount = items.reduce((acc, curr) => acc + curr.subtotal, 0)
+  const initialPaymentAmount = Number(initialPayment) || 0
+  const isCreditPurchase = paymentMethod === 'credit'
 
   const handleSubmit = async () => {
     if (items.length === 0) {
@@ -107,6 +112,11 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
       return
     }
 
+    if (isCreditPurchase) {
+      if (!supplierId) { setError('Selecciona un proveedor para registrar una compra a credito.'); return }
+      if (!dueDate || dueDate < date) { setError('La fecha de vencimiento debe ser igual o posterior a la fecha de compra.'); return }
+      if (initialPaymentAmount < 0 || initialPaymentAmount >= totalAmount) { setError('El anticipo debe ser mayor o igual a cero y menor al total.'); return }
+    }
     setSaving(true)
     setError('')
     try {
@@ -115,6 +125,9 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
         setAsPreferredSupplier: setAsPreferredSupplier && Boolean(supplierId),
         date: date || getBusinessDate(),
         paymentMethod,
+        dueDate: isCreditPurchase ? dueDate : null,
+        initialPayment: isCreditPurchase ? initialPaymentAmount : 0,
+        initialPaymentMethod: isCreditPurchase && initialPaymentAmount > 0 ? initialPaymentMethod : null,
         totalAmount,
         notes: notes.trim() || null,
         items: items.map(i => ({
@@ -126,7 +139,8 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
         })),
       }
 
-      await api.stockEntries.create(payload)
+      const result: any = await api.stockEntries.create(payload)
+      if (!result?.success) throw new Error(result?.error || 'No se pudo registrar la compra.')
       onSuccess()
     } catch (e: any) {
       setError(e.message || 'Error al procesar la entrada de mercancía')
@@ -210,6 +224,14 @@ export default function PurchaseFormModal({ onClose, onSuccess }: PurchaseFormMo
               </div>
             </div>
 
+            {isCreditPurchase && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, background: 'rgba(245,158,11,.10)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--accent-warning)' }}>
+                <div className="form-group" style={{ margin: 0 }}><label className="form-label">Fecha de vencimiento *</label><input className="input" type="date" min={date} value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
+                <div className="form-group" style={{ margin: 0 }}><label className="form-label">Anticipo (Q)</label><input className="input" type="number" min="0" max={Math.max(0, totalAmount - 0.01)} step="0.01" value={initialPayment} onChange={e => setInitialPayment(e.target.value)} /></div>
+                <div className="form-group" style={{ margin: 0 }}><label className="form-label">Medio del anticipo</label><select className="select" value={initialPaymentMethod} disabled={initialPaymentAmount <= 0} onChange={e => setInitialPaymentMethod(e.target.value)}><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="transfer">Transferencia</option></select></div>
+                <div style={{ gridColumn: '1 / -1', fontSize: 12.5, color: 'var(--text-secondary)' }}>{supplierId ? <>Se creara una cuenta por pagar a <strong>{selectedSupplierName}</strong>. Saldo inicial: <strong style={{ color: 'var(--accent-warning)' }}>Q{Math.max(0, totalAmount - initialPaymentAmount).toFixed(2)}</strong>.</> : <span style={{ color: 'var(--accent-danger)' }}>Selecciona un proveedor: las compras a credito deben quedar asociadas a quien se le debe.</span>}</div>
+              </div>
+            )}
             {/* Buscador de productos con botón de creación rápida */}
             <div style={{ background: 'var(--bg-base)', padding: 14, borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

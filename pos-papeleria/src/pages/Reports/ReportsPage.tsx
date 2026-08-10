@@ -105,6 +105,8 @@ interface PurchaseSummary {
   total_invested: number
   supplier_count: number
   weighted_unit_cost: number
+  outstanding_payables?: number
+  overdue_payables?: number
 }
 
 interface PurchaseTrend {
@@ -687,6 +689,7 @@ export default function ReportsPage() {
               { label: 'Compras registradas', value: Number(purchases?.summary.purchase_count || 0), icon: ShoppingBag, color: '#3b82f6', bg: 'rgba(59,130,246,0.15)' },
               { label: 'Unidades adquiridas', value: Number(purchases?.summary.total_units || 0), icon: Package, color: '#8b5cf6', bg: 'rgba(139,92,246,0.15)' },
               { label: 'Costo unitario prom.', value: formatMoney(Number(purchases?.summary.weighted_unit_cost || 0)), icon: Truck, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+              { label: 'Por pagar actual', value: formatMoney(Number(purchases?.summary.outstanding_payables || 0)), icon: CircleDollarSign, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
             ].map(({ label, value, icon: Icon, color, bg }) => <div key={label} className="stat-card"><div className="stat-icon" style={{ background: bg }}><Icon size={20} style={{ color }} /></div><div><div className="stat-label">{label}</div><div className="stat-value" style={{ color }}>{value}</div></div></div>)}
           </div>
 

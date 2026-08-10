@@ -121,6 +121,7 @@ export default function PurchasesPage() {
               <th>Fecha</th>
               <th>Proveedor</th>
               <th>Factura / Notas</th>
+              <th>Credito</th>
               <th style={{ textAlign: 'right' }}>Monto Total (Q)</th>
               <th style={{ width: 100, textAlign: 'center' }}>Acciones</th>
             </tr>
@@ -128,13 +129,13 @@ export default function PurchasesPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
                   Cargando historial de compras...
                 </td>
               </tr>
             ) : purchases.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
                   <ShoppingBag size={36} style={{ display: 'block', margin: '0 auto 10px', opacity: 0.3 }} />
                   <p style={{ fontSize: 15, fontWeight: 500 }}>No hay compras registradas</p>
                   <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
@@ -178,6 +179,11 @@ export default function PurchasesPage() {
                     ) : (
                       <span style={{ color: 'var(--text-muted)' }}>—</span>
                     )}
+                  </td>
+                  <td style={{ fontSize: 12.5 }}>
+                    {purchase.payment_method === 'credit' ? (
+                      <div><strong style={{ color: Number(purchase.payable_balance || 0) > 0 ? 'var(--accent-warning)' : 'var(--accent-success)' }}>Saldo: Q{Number(purchase.payable_balance || 0).toFixed(2)}</strong>{purchase.payable_due_date && <div style={{ color: 'var(--text-muted)', marginTop: 2 }}>Vence: {purchase.payable_due_date}</div>}</div>
+                    ) : <span style={{ color: 'var(--text-muted)' }}>Pagada</span>}
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent-success)', fontSize: 15 }}>
                     Q{Number(purchase.total_amount || 0).toFixed(2)}

@@ -27,6 +27,7 @@ interface Metrics {
   cashSales: number
   cashPurchases: number
   cashCreditPayments: number
+  cashPayablePayments: number
   expenses: number
   expectedCash: number
 }
@@ -175,7 +176,7 @@ export default function CashRegisterPage() {
             <MetricCard label="Fondo inicial" value={metrics?.openingAmount || 0} icon={WalletCards} />
             <MetricCard label="Ventas efectivo" value={metrics?.cashSales || 0} icon={Banknote} color="var(--accent-success)" />
             <MetricCard label="Abonos crédito efectivo" value={metrics?.cashCreditPayments || 0} icon={Banknote} color="var(--accent-success)" />
-            <MetricCard label="Compras efectivo" value={metrics?.cashPurchases || 0} icon={ReceiptText} color="var(--accent-danger)" />
+            <MetricCard label="Pagos proveedores efectivo" value={metrics?.cashPayablePayments || 0} icon={ReceiptText} color="var(--accent-danger)" />`r`n            <MetricCard label="Compras efectivo" value={metrics?.cashPurchases || 0} icon={ReceiptText} color="var(--accent-danger)" />
             <MetricCard label="Gastos de caja" value={metrics?.expenses || 0} icon={MinusCircle} color="var(--accent-danger)" />
             <MetricCard label="Efectivo esperado" value={metrics?.expectedCash || 0} icon={Coins} color="var(--accent-primary)" />
           </div>

@@ -136,6 +136,32 @@ export const creditPayments = sqliteTable('credit_payments', {
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 })
 // ─── Caja y gastos ───────────────────────────────────────────────────────────
+// Accounts payable
+export const accountsPayable = sqliteTable('accounts_payable', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  stockEntryId: integer('stock_entry_id').references(() => stockEntries.id).notNull(),
+  supplierId: integer('supplier_id').references(() => suppliers.id).notNull(),
+  originalAmount: real('original_amount').notNull(),
+  balance: real('balance').notNull(),
+  dueDate: text('due_date').notNull(),
+  status: text('status').notNull().default('open'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  paidAt: text('paid_at'),
+  cancelledAt: text('cancelled_at'),
+})
+
+export const payablePayments = sqliteTable('payable_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  accountId: integer('account_id').references(() => accountsPayable.id).notNull(),
+  stockEntryId: integer('stock_entry_id').references(() => stockEntries.id).notNull(),
+  supplierId: integer('supplier_id').references(() => suppliers.id).notNull(),
+  amount: real('amount').notNull(),
+  paymentMethod: text('payment_method').notNull(),
+  businessDate: text('business_date').notNull(),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+})
+
 export const cashRegisters = sqliteTable('cash_registers', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   businessDate: text('business_date').notNull(),

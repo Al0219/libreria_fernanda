@@ -10,6 +10,7 @@ import CustomersPage from './pages/Customers/CustomersPage'
 import ReportsPage from './pages/Reports/ReportsPage'
 import CashRegisterPage from './pages/CashRegister/CashRegisterPage'
 import CreditsPage from './pages/Credits/CreditsPage'
+import PayablesPage from './pages/Payables/PayablesPage'
 import SettingsPage from './pages/Settings/SettingsPage'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
               <Route path="/customers" element={<CustomersPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/cash-register" element={<CashRegisterPage />} />              <Route path="/credits" element={<CreditsPage />} />
+              <Route path="/payables" element={<PayablesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
           </ErrorBoundary>

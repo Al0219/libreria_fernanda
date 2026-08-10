@@ -195,7 +195,10 @@ export function registerReportHandlers(ipcMain: IpcMain) {
       )
     }
 
-    return { summary, trend, suppliers, products, suppliersForFilter, productsForFilter, selectedProductId: historyProductId || null, priceHistory, from, to }
+    const payables = queryFirst(db,
+      "SELECT COALESCE(SUM(ap.balance), 0) as outstanding, COALESCE(SUM(CASE WHEN ap.due_date < date('now', 'localtime') THEN ap.balance ELSE 0 END), 0) as overdue FROM accounts_payable ap JOIN stock_entries se ON se.id=ap.stock_entry_id WHERE ap.status='open' AND (se.cancelled IS NULL OR se.cancelled=0)"
+    ) || { outstanding: 0, overdue: 0 }
+    return { summary: { ...summary, outstanding_payables: payables.outstanding, overdue_payables: payables.overdue }, trend, suppliers, products, suppliersForFilter, productsForFilter, selectedProductId: historyProductId || null, priceHistory, from, to }
   })
   ipcMain.handle('reports:getCustomerReport', (_e, from: string, to: string, filters?: { customerId?: number }) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {

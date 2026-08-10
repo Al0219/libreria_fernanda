@@ -69,7 +69,14 @@ const api = {
     getDashboard: (filters?: { search?: string; status?: string }) => ipcRenderer.invoke('credits:getDashboard', filters),
     getPayments: (accountId: number) => ipcRenderer.invoke('credits:getPayments', accountId),
     addPayment: (data: { accountId: number; amount: number; paymentMethod: string; notes?: string }) => ipcRenderer.invoke('credits:addPayment', data),
-  },  // Caja y gastos
+  },
+  // Cuentas por pagar
+  payables: {
+    getDashboard: (filters?: { search?: string; status?: string }) => ipcRenderer.invoke('payables:getDashboard', filters),
+    getPayments: (accountId: number) => ipcRenderer.invoke('payables:getPayments', accountId),
+    addPayment: (data: { accountId: number; amount: number; paymentMethod: string; notes?: string }) => ipcRenderer.invoke('payables:addPayment', data),
+  },
+  // Caja y gastos
   cashRegister: {
     getToday: () => ipcRenderer.invoke('cashRegister:getToday'),
     getHistory: () => ipcRenderer.invoke('cashRegister:getHistory'),

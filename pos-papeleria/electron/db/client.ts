@@ -202,6 +202,30 @@ function createTables() {
       notes TEXT,
       created_at TEXT DEFAULT (datetime('now'))
     );
+    CREATE TABLE IF NOT EXISTS accounts_payable (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      stock_entry_id INTEGER NOT NULL UNIQUE REFERENCES stock_entries(id),
+      supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+      original_amount REAL NOT NULL,
+      balance REAL NOT NULL,
+      due_date TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      created_at TEXT DEFAULT (datetime('now')),
+      paid_at TEXT,
+      cancelled_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS payable_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id INTEGER NOT NULL REFERENCES accounts_payable(id),
+      stock_entry_id INTEGER NOT NULL REFERENCES stock_entries(id),
+      supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+      amount REAL NOT NULL,
+      payment_method TEXT NOT NULL,
+      business_date TEXT NOT NULL,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
     CREATE TABLE IF NOT EXISTS cash_registers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       business_date TEXT NOT NULL UNIQUE,

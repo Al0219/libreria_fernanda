@@ -193,3 +193,13 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 6. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
 7. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
 8. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
+
+## 2026-08-09 — Cuentas por pagar
+
+- Rama `feat/accounts-payable`: se implementaron cuentas por pagar para compras a credito.
+- Compras a credito ahora exigen proveedor y vencimiento, admiten anticipo y crean la deuda junto con la entrada e inventario dentro de la misma transaccion SQLite.
+- Se agregaron `accounts_payable` y `payable_payments`, la pantalla **Por pagar**, pagos parciales/liquidacion, saldo en Proveedores e historial de Compras.
+- Los pagos a proveedores en efectivo se restan del efectivo esperado de Caja; Reportes > Compras muestra el saldo actual por pagar.
+- Seguridad: no se puede cancelar una compra a credito que tenga anticipos/abonos, ni borrar un proveedor con saldo pendiente.
+- Verificado: `npx tsc --noEmit` y `npx vite build` correctos. `npm run build` compila Vite/Electron, pero electron-builder no genera instalador por falta de privilegio Windows para crear symlinks de `winCodeSign`.
+- Siguiente paso recomendado: prueba manual en Electron: compra a credito con/ sin anticipo, pago parcial en Por pagar, comprobacion de Caja y bloqueo de anulacion.

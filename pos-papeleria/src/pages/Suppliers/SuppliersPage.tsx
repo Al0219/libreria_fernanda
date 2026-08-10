@@ -12,6 +12,7 @@ interface Supplier {
   email: string
   address: string
   notes: string
+  outstanding_balance?: number
 }
 
 export default function SuppliersPage() {
@@ -39,7 +40,8 @@ export default function SuppliersPage() {
     if (!supplierToDelete) return
     setDeleting(true)
     try {
-      await api.suppliers.delete(supplierToDelete.id)
+      const result: any = await api.suppliers.delete(supplierToDelete.id)
+      if (!result?.success) { alert(result?.error || 'No se pudo eliminar el proveedor.'); return }
       setSupplierToDelete(null)
       await loadSuppliers()
     } catch {
@@ -112,6 +114,11 @@ export default function SuppliersPage() {
               {supplier.email && (
                 <div className="flex gap-2 items-center" style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
                   <Mail size={12} /> {supplier.email}
+                </div>
+              )}
+              {Number(supplier.outstanding_balance || 0) > 0 && (
+                <div style={{ marginTop: 10, padding: '7px 9px', borderRadius: 6, background: 'rgba(245,158,11,.12)', color: 'var(--accent-warning)', fontSize: 12, fontWeight: 700 }}>
+                  Saldo por pagar: Q{Number(supplier.outstanding_balance || 0).toFixed(2)}
                 </div>
               )}
               {supplier.notes && (

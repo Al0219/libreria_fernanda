@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   ShoppingCart, Package, Truck, BarChart2,
-  Settings, Store, ShoppingBag, Receipt, UsersRound, WalletCards, HandCoins
+  Settings, Store, ShoppingBag, Receipt, UsersRound, WalletCards, HandCoins, Landmark
 } from 'lucide-react'
 
 const navItems = [
@@ -11,7 +11,8 @@ const navItems = [
   { to: '/sales',     icon: Receipt,      label: 'Ventas' },
   { to: '/suppliers', icon: Truck,        label: 'Proveedores' },
   { to: '/customers', icon: UsersRound,   label: 'Clientes' },
-  { to: '/credits',   icon: HandCoins,    label: 'Créditos' },
+  { to: '/credits',   icon: HandCoins,    label: 'Creditos' },
+  { to: '/payables',  icon: Landmark,     label: 'Por pagar' },
   { to: '/reports',   icon: BarChart2,    label: 'Reportes' },
   { to: '/cash-register', icon: WalletCards, label: 'Caja' },
 ]

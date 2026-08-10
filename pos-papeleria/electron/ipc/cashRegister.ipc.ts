@@ -15,6 +15,9 @@ function calculateMetrics(db: any, date: string, registerId: number, openingAmou
   const cashCreditPayments = Number(queryFirst(db,
     "SELECT COALESCE(SUM(amount), 0) as total FROM credit_payments WHERE business_date=? AND payment_method='cash'",
     [date])?.total || 0)
+  const cashPayablePayments = Number(queryFirst(db,
+    "SELECT COALESCE(SUM(amount), 0) as total FROM payable_payments WHERE business_date=? AND payment_method='cash'",
+    [date])?.total || 0)
   const expenses = Number(queryFirst(db,
     'SELECT COALESCE(SUM(amount), 0) as total FROM cash_expenses WHERE cash_register_id=?',
     [registerId])?.total || 0)
