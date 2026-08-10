@@ -79,7 +79,7 @@ export default function CustomersPage() {
               </div>
               {customer.phone && <div className="flex gap-2 items-center" style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 4 }}><Phone size={12} /> {customer.phone}</div>}
               {customer.email && <div className="flex gap-2 items-center" style={{ fontSize: 13, color: 'var(--text-secondary)' }}><Mail size={12} /> {customer.email}</div>}
-              {customer.address && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>{customer.address}</p>}
+              {customer.address && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>{customer.address}</p>}              {Boolean(customer.credit_authorized) && <div style={{ marginTop: 9, paddingTop: 8, borderTop: '1px solid var(--border-subtle)', fontSize: 12, color: 'var(--text-secondary)' }}>Crédito: <strong>Q{Number(customer.credit_limit || 0).toFixed(2)}</strong> · Pendiente: <strong style={{ color: Number(customer.outstanding_balance || 0) > 0 ? 'var(--accent-warning)' : 'var(--accent-success)' }}>Q{Number(customer.outstanding_balance || 0).toFixed(2)}</strong></div>}
             </div>
           ))}
         </div>

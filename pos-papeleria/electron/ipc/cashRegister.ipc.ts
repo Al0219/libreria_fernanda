@@ -12,6 +12,9 @@ function calculateMetrics(db: any, date: string, registerId: number, openingAmou
   const cashPurchases = Number(queryFirst(db,
     "SELECT COALESCE(SUM(total_amount), 0) as total FROM stock_entries WHERE date=? AND payment_method='cash' AND (cancelled IS NULL OR cancelled=0)",
     [date])?.total || 0)
+  const cashCreditPayments = Number(queryFirst(db,
+    "SELECT COALESCE(SUM(amount), 0) as total FROM credit_payments WHERE business_date=? AND payment_method='cash'",
+    [date])?.total || 0)
   const expenses = Number(queryFirst(db,
     'SELECT COALESCE(SUM(amount), 0) as total FROM cash_expenses WHERE cash_register_id=?',
     [registerId])?.total || 0)
@@ -20,8 +23,9 @@ function calculateMetrics(db: any, date: string, registerId: number, openingAmou
     openingAmount: Number(openingAmount || 0),
     cashSales,
     cashPurchases,
+    cashCreditPayments,
     expenses,
-    expectedCash: Number(openingAmount || 0) + cashSales - cashPurchases - expenses,
+    expectedCash: Number(openingAmount || 0) + cashSales + cashCreditPayments - cashPurchases - expenses,
   }
 }
 

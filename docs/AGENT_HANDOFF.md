@@ -129,15 +129,23 @@ Actualiza este archivo al concluir cada tarea. El código y este registro, junto
 - **Rankings:** Incluye los 10 productos, categorías y servicios más vendidos, con cantidad y ventas brutas. Los importes de rankings se identifican como brutos porque el descuento se guarda a nivel de venta, no de línea.
 - **Consistencia:** Series, comparativo y rankings excluyen ventas canceladas.
 - **Verificado:** `npx tsc --noEmit`, `npx vite build`, pruebas SQLite de series, comparativo, rankings con venta cancelada y agrupación semanal/mensual correctas.
-## Pendiente inmediato
-
-1. Prueba manual completa: crear venta de producto, venta de servicio, reimprimir ticket, cancelar venta y confirmar que el stock se repone una sola vez.
-2. Validar stock y cantidades también en el proceso principal antes de crear una venta.
-3. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.
-
 
 ## Protocolo de trabajo
 
 - Antes de editar: revisa `git status --short`, el último commit y este archivo.
 - Una tarea por rama. Para trabajo simultáneo, usa `git worktree` y evita que dos CLIs modifiquen el mismo archivo.
 - Al entregar: actualiza este archivo, ejecuta las pruebas relevantes y crea un commit descriptivo.
+## Actualización 2026-08-09: ventas a crédito y cuentas por cobrar
+
+- **Clientes:** Se agregaron autorización y límite de crédito. El POS y el módulo de Clientes muestran el saldo pendiente para evitar exceder el límite disponible.
+- **Venta a crédito:** El cobro permite seleccionar crédito únicamente para clientes autorizados, definir vencimiento y registrar un anticipo por efectivo, tarjeta o transferencia. La creación de la venta, sus líneas, el descuento de inventario, la cuenta por cobrar y el anticipo se ejecutan en una sola transacción SQLite.
+- **Cobranza:** Nuevo módulo **Créditos** con saldo total, cartera vencida, búsqueda por cliente/NIT/folio, cuentas abiertas y registro de abonos. Cada abono se registra de forma transaccional y cierra la cuenta cuando liquida el saldo.
+- **Caja, historial y reportes:** La caja incluye anticipos y abonos recibidos en efectivo. Historial y tickets, incluso reimpresiones, informan saldo y vencimiento. Reportes identifica las ventas a crédito sin confundirlas con efectivo recibido.
+- **Protecciones:** No se permiten créditos sin cliente/autorización/límite, con vencimiento pasado, por encima del límite ni anticipos iguales o mayores al total. No se puede cancelar una venta a crédito que ya tiene dinero aplicado; una cuenta sin pagos sí se cancela junto con la venta y el inventario se restaura.
+- **Verificado:** prueba SQLite de límite, anticipo, abonos, cierre de cuenta y cancelación; `npx tsc --noEmit` y `npx vite build` correctos. El empaquetado completo continúa sujeto al privilegio de enlaces simbólicos de Windows ya documentado.
+
+## Pendiente inmediato
+
+1. Prueba manual: autorizar crédito a un cliente, crear venta con y sin anticipo, registrar abono y comprobar el efectivo esperado de Caja.
+2. Definir política operativa para clientes con saldo pendiente que se desactiven; actualmente el historial de la deuda se conserva.
+3. Resolver el empaquetado del instalador en Windows (habilitar privilegio de enlaces simbólicos o ajustar la configuración de firma) y definir un icono propio.

@@ -34,6 +34,8 @@ export const customers = sqliteTable('customers', {
   email: text('email'),
   address: text('address'),
   notes: text('notes'),
+  creditAuthorized: integer('credit_authorized', { mode: 'boolean' }).notNull().default(false),
+  creditLimit: real('credit_limit').notNull().default(0),
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
   createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
 })
@@ -108,6 +110,31 @@ export const saleItems = sqliteTable('sale_items', {
   metadataJson: text('metadata_json'), // datos extra según item_type
 })
 
+// ─── Cuentas por cobrar ──────────────────────────────────────────────────────
+export const accountsReceivable = sqliteTable('accounts_receivable', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  saleId: integer('sale_id').references(() => sales.id).notNull(),
+  customerId: integer('customer_id').references(() => customers.id).notNull(),
+  originalAmount: real('original_amount').notNull(),
+  balance: real('balance').notNull(),
+  dueDate: text('due_date').notNull(),
+  status: text('status').notNull().default('open'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+  paidAt: text('paid_at'),
+  cancelledAt: text('cancelled_at'),
+})
+
+export const creditPayments = sqliteTable('credit_payments', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  accountId: integer('account_id').references(() => accountsReceivable.id).notNull(),
+  saleId: integer('sale_id').references(() => sales.id).notNull(),
+  customerId: integer('customer_id').references(() => customers.id).notNull(),
+  amount: real('amount').notNull(),
+  paymentMethod: text('payment_method').notNull(),
+  businessDate: text('business_date').notNull(),
+  notes: text('notes'),
+  createdAt: text('created_at').default(sql`CURRENT_TIMESTAMP`),
+})
 // ─── Caja y gastos ───────────────────────────────────────────────────────────
 export const cashRegisters = sqliteTable('cash_registers', {
   id: integer('id').primaryKey({ autoIncrement: true }),

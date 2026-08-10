@@ -25,6 +25,9 @@ interface Sale {
   customer_nit: string | null
   cancelled: number
   created_at: string
+  credit_balance?: number | null
+  credit_due_date?: string | null
+  credit_status?: string | null
 }
 
 interface SaleItem {
@@ -43,6 +46,7 @@ interface SaleItem {
 function paymentLabel(method: string) {
   if (method === 'cash')     return { label: 'Efectivo',      icon: <Banknote size={13} />,       color: 'var(--accent-success)' }
   if (method === 'card')     return { label: 'Tarjeta',       icon: <CreditCard size={13} />,     color: 'var(--accent-primary)' }
+  if (method === 'credit')   return { label: 'Crédito',       icon: <CreditCard size={13} />,     color: 'var(--accent-warning)' }
   return                            { label: 'Transferencia', icon: <ArrowLeftRight size={13} />, color: 'var(--accent-warning)' }
 }
 
@@ -115,13 +119,10 @@ function SaleRow({
     e.stopPropagation()
     setPrinting(true)
     try {
-      // Necesitamos los ítems para el ticket
-      let saleItems = items
-      if (saleItems.length === 0) {
-        const res = await api.sales.getById(sale.id) as { sale: any; items: SaleItem[] }
-        saleItems = res.items || []
-        setItems(saleItems)
-      }
+      // La consulta tambiÃ©n aporta el saldo vigente de una venta a crÃ©dito.
+      const res = await api.sales.getById(sale.id) as { sale: any; items: SaleItem[]; account?: { balance?: number; due_date?: string } | null }
+      const saleItems = res.items || items
+      if (items.length === 0) setItems(saleItems)
 
       const config = await api.config.getAll() as Record<string, string>
 
@@ -147,6 +148,8 @@ function SaleRow({
         ticketFooter: config.ticket_footer,
         customerName: sale.customer_name || undefined,
         customerNit: sale.customer_nit || undefined,
+        creditBalance: res.account?.balance ?? undefined,
+        dueDate: res.account?.due_date ?? undefined,
       }
 
       const blob = await pdf(<TicketDocument data={ticketData} />).toBlob()
@@ -200,6 +203,7 @@ function SaleRow({
           }}>
             {pay.icon} {pay.label}
           </span>
+          {sale.payment_method === 'credit' && <div style={{ marginTop: 4, fontSize: 11, color: sale.credit_status === 'paid' ? 'var(--accent-success)' : 'var(--accent-warning)' }}>Saldo: Q{Number(sale.credit_balance || 0).toFixed(2)}{sale.credit_due_date ? ' · vence ' + sale.credit_due_date : ''}</div>}
         </td>
 
         {/* Subtotal */}
@@ -439,6 +443,7 @@ export default function SalesHistoryPage() {
               <option value="cash">Efectivo</option>
               <option value="card">Tarjeta</option>
               <option value="transfer">Transferencia</option>
+              <option value="credit">Crédito</option>
             </select>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 2 }}>

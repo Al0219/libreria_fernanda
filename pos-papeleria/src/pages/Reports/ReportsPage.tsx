@@ -11,9 +11,11 @@ interface Summary {
   cash_total: number
   card_total: number
   transfer_total: number
+  credit_total: number
   cash_count: number
   card_count: number
   transfer_count: number
+  credit_count: number
 }
 
 interface DailySale {
@@ -214,7 +216,7 @@ export default function ReportsPage() {
   const paymentRows = [
     { label: 'Efectivo', value: summary?.cash_total || 0, count: summary?.cash_count || 0, icon: Banknote, color: '#f59e0b' },
     { label: 'Tarjeta', value: summary?.card_total || 0, count: summary?.card_count || 0, icon: CreditCard, color: '#3b82f6' },
-    { label: 'Transferencia', value: summary?.transfer_total || 0, count: summary?.transfer_count || 0, icon: Landmark, color: '#8b5cf6' },
+    { label: 'Transferencia', value: summary?.transfer_total || 0, count: summary?.transfer_count || 0, icon: Landmark, color: '#8b5cf6' },    { label: 'Crédito', value: summary?.credit_total || 0, count: summary?.credit_count || 0, icon: CreditCard, color: '#f59e0b' },
   ]
 
   const groupLabels: Record<GroupBy, string> = { day: 'día', week: 'semana', month: 'mes' }

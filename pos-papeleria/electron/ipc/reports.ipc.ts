@@ -20,9 +20,11 @@ export function registerReportHandlers(ipcMain: IpcMain) {
       "COALESCE(SUM(CASE WHEN payment_method='cash' THEN total ELSE 0 END), 0) as cash_total, " +
       "COALESCE(SUM(CASE WHEN payment_method='card' THEN total ELSE 0 END), 0) as card_total, " +
       "COALESCE(SUM(CASE WHEN payment_method='transfer' THEN total ELSE 0 END), 0) as transfer_total, " +
+      "COALESCE(SUM(CASE WHEN payment_method='credit' THEN total ELSE 0 END), 0) as credit_total, " +
       "COALESCE(SUM(CASE WHEN payment_method='cash' THEN 1 ELSE 0 END), 0) as cash_count, " +
       "COALESCE(SUM(CASE WHEN payment_method='card' THEN 1 ELSE 0 END), 0) as card_count, " +
-      "COALESCE(SUM(CASE WHEN payment_method='transfer' THEN 1 ELSE 0 END), 0) as transfer_count " +
+      "COALESCE(SUM(CASE WHEN payment_method='transfer' THEN 1 ELSE 0 END), 0) as transfer_count, " +
+      "COALESCE(SUM(CASE WHEN payment_method='credit' THEN 1 ELSE 0 END), 0) as credit_count " +
       'FROM sales WHERE date BETWEEN ? AND ? AND ' + activeSalesCondition,
       [from, to]
     )

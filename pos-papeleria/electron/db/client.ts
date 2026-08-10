@@ -105,6 +105,8 @@ function createTables() {
       email TEXT,
       address TEXT,
       notes TEXT,
+      credit_authorized INTEGER NOT NULL DEFAULT 0,
+      credit_limit REAL NOT NULL DEFAULT 0,
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now'))
     );
@@ -176,6 +178,30 @@ function createTables() {
       metadata_json TEXT
     );
 
+    CREATE TABLE IF NOT EXISTS accounts_receivable (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id INTEGER NOT NULL UNIQUE REFERENCES sales(id),
+      customer_id INTEGER NOT NULL REFERENCES customers(id),
+      original_amount REAL NOT NULL,
+      balance REAL NOT NULL,
+      due_date TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      created_at TEXT DEFAULT (datetime('now')),
+      paid_at TEXT,
+      cancelled_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS credit_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      account_id INTEGER NOT NULL REFERENCES accounts_receivable(id),
+      sale_id INTEGER NOT NULL REFERENCES sales(id),
+      customer_id INTEGER NOT NULL REFERENCES customers(id),
+      amount REAL NOT NULL,
+      payment_method TEXT NOT NULL,
+      business_date TEXT NOT NULL,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
     CREATE TABLE IF NOT EXISTS cash_registers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       business_date TEXT NOT NULL UNIQUE,
@@ -223,6 +249,18 @@ function runMigrations() {
     // La columna ya existe — ignorar
   }
 
+  // Agregar configuración de crédito a clientes existentes
+  for (const [column, definition] of [
+    ['credit_authorized', 'INTEGER NOT NULL DEFAULT 0'],
+    ['credit_limit', 'REAL NOT NULL DEFAULT 0'],
+  ]) {
+    try {
+      db.run(`ALTER TABLE customers ADD COLUMN ${column} ${definition}`)
+      console.log(`[DB] Migración: columna ${column} agregada a customers`)
+    } catch {
+      // La columna ya existe — ignorar
+    }
+  }
   // Agregar NIT a proveedores existentes
   try {
     db.run(`ALTER TABLE suppliers ADD COLUMN nit TEXT`)

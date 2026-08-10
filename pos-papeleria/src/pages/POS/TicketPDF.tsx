@@ -15,6 +15,8 @@ export interface TicketData {
   paymentMethod: string  // 'cash' | 'card' | 'transfer'
   amountPaid: number
   changeGiven: number
+  creditBalance?: number
+  dueDate?: string
   items: {
     description: string
     quantity: number
@@ -37,6 +39,7 @@ const METHOD_LABEL: Record<string, string> = {
   cash: 'Efectivo',
   card: 'Tarjeta',
   transfer: 'Transferencia',
+  credit: 'Crédito',
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -265,6 +268,12 @@ export function TicketDocument({ data }: { data: TicketData }) {
           )}
         </View>
 
+        {data.paymentMethod === 'credit' && (
+          <View style={[S.paymentBox, { marginTop: 6 }]}>
+            <View><Text style={S.paymentLabel}>Saldo pendiente</Text><Text style={S.paymentValue}>Q{Number(data.creditBalance || 0).toFixed(2)}</Text></View>
+            <View><Text style={S.paymentLabel}>Vencimiento</Text><Text style={S.paymentValue}>{data.dueDate || '—'}</Text></View>
+          </View>
+        )}
         {/* ── Footer ── */}
         <View style={S.footer}>
           {data.ticketFooter
